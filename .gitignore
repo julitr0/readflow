@@ -41,10 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-AuthKey_8LYJ3Y87D4.p8.cursor/mcp.json
-.cursor/
-.cursor/
-.env.local
+# Cursor IDE - exclude sensitive MCP config but keep rules
+.cursor/mcp.json
+.cursor/mcp-*.json
+
+# Log files
 *.log
-node_modules/
-.next/
