@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Search, Filter, Download, Eye, Calendar, Clock, User, Globe, CheckCircle, XCircle, Clock as ClockIcon, FileText } from "lucide-react";
+import { Loader2, Search, Download, Eye, Calendar, Clock, User, Globe, CheckCircle, XCircle, Clock as ClockIcon, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 
@@ -43,7 +43,7 @@ export const ConversionsList = ({ onRefresh }: ConversionsListProps) => {
   const [hasMore, setHasMore] = useState(true);
   const [selectedConversion, setSelectedConversion] = useState<Conversion | null>(null);
 
-  const fetchConversions = async (pageNum: number = 1, append: boolean = false) => {
+  const fetchConversions = useCallback(async (pageNum: number = 1, append: boolean = false) => {
     try {
       const params = new URLSearchParams({
         page: pageNum.toString(),
@@ -80,11 +80,11 @@ export const ConversionsList = ({ onRefresh }: ConversionsListProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, statusFilter]);
 
   useEffect(() => {
     fetchConversions(1, false);
-  }, [search, statusFilter]);
+  }, [fetchConversions]);
 
   const handleRefresh = () => {
     setPage(1);
@@ -132,7 +132,7 @@ export const ConversionsList = ({ onRefresh }: ConversionsListProps) => {
     try {
       // In real implementation, this would trigger the actual file download
       toast.success("Download started");
-    } catch (error) {
+    } catch {
       toast.error("Download failed");
     }
   };

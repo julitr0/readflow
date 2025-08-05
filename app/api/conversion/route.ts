@@ -1,11 +1,13 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db/drizzle";
-import { conversion } from "@/db/schema";
+import { conversion, user } from "@/db/schema";
 import { contentConverter, type ConversionMetadata } from "@/lib/conversion";
+import { validateConversionRequest, validateConversionFilters } from "@/lib/validation";
+import { kindleDelivery } from "@/lib/kindle-delivery";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
-import { eq, or, ilike, desc, sql } from "drizzle-orm";
+import { eq, or, ilike, desc, sql, and } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,32 +22,61 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+    
+    // Validate request data
+    const validation = await validateConversionRequest(request);
+    if (validation instanceof NextResponse) {
+      return validation; // Return validation error response
+    }
+    
+    const { data } = validation;
 
     const userId = result.session.userId;
 
-    // Parse request body
-    const body = await request.json();
-    const { htmlContent, sourceUrl, customMetadata } = body;
+    const { url, htmlContent, sourceUrl, customMetadata, sendToKindle } = data;
 
-    // Validate required fields
-    if (!htmlContent) {
-      return NextResponse.json(
-        { error: "HTML content is required" },
-        { status: 400 }
-      );
+    let finalHtmlContent: string;
+    let finalSourceUrl: string | undefined;
+
+    // Handle URL-based conversion
+    if (url) {
+      try {
+        // Fetch content from URL
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'ReadFlow/1.0 (Article Converter)',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch content: ${response.status}`);
+        }
+        
+        finalHtmlContent = await response.text();
+        finalSourceUrl = url;
+      } catch (error) {
+        return NextResponse.json(
+          { error: "Failed to fetch content from URL", details: error instanceof Error ? error.message : "Unknown error" },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Use provided HTML content
+      finalHtmlContent = htmlContent!;
+      finalSourceUrl = sourceUrl;
     }
 
     // Validate content
-    const validation = contentConverter.validateContent(htmlContent);
-    if (!validation.isValid) {
+    const contentValidation = contentConverter.validateContent(finalHtmlContent);
+    if (!contentValidation.isValid) {
       return NextResponse.json(
-        { error: "Invalid content", details: validation.errors },
+        { error: "Invalid content", details: contentValidation.errors },
         { status: 400 }
       );
     }
 
     // Extract metadata
-    const extractedMetadata = contentConverter.extractMetadata(htmlContent);
+    const extractedMetadata = contentConverter.extractMetadata(finalHtmlContent);
     const metadata: ConversionMetadata = {
       ...extractedMetadata,
       ...customMetadata,
@@ -60,7 +91,7 @@ export async function POST(request: NextRequest) {
       title: metadata.title,
       author: metadata.author,
       source: metadata.source,
-      sourceUrl: sourceUrl || null,
+      sourceUrl: finalSourceUrl || null,
       date: new Date(metadata.date),
       wordCount: metadata.wordCount,
       readingTime: metadata.readingTime,
@@ -73,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     // Perform conversion
     const conversionResult = await contentConverter.convertHtmlToKindle(
-      htmlContent,
+      finalHtmlContent,
       metadata
     );
 
@@ -106,12 +137,48 @@ export async function POST(request: NextRequest) {
       })
       .where(eq(conversion.id, conversionId));
 
+    // Send to Kindle if requested
+    let deliveryResult;
+    if (sendToKindle) {
+      // Get user's Kindle email
+      const userRecord = await db
+        .select({ kindleEmail: user.kindleEmail })
+        .from(user)
+        .where(eq(user.id, userId))
+        .limit(1);
+
+      if (!userRecord[0]?.kindleEmail) {
+        return NextResponse.json({
+          success: true,
+          conversionId,
+          metadata: conversionResult.metadata,
+          fileUrl: conversionResult.fileUrl,
+          fileSize: conversionResult.fileSize,
+          warning: "Conversion successful, but no Kindle email configured. Please set your Kindle email in settings to receive files automatically.",
+        });
+      }
+
+      // Send to Kindle
+      deliveryResult = await kindleDelivery.sendToKindle(
+        conversionResult.fileUrl!,
+        userRecord[0].kindleEmail,
+        metadata.title
+      );
+
+      if (!deliveryResult.success) {
+        console.error("Kindle delivery failed:", deliveryResult.error);
+        // Don't fail the entire request, just log the error
+      }
+    }
+
     return NextResponse.json({
       success: true,
       conversionId,
       metadata: conversionResult.metadata,
       fileUrl: conversionResult.fileUrl,
       fileSize: conversionResult.fileSize,
+      delivered: sendToKindle ? deliveryResult?.success : false,
+      deliveryError: deliveryResult?.success === false ? deliveryResult.error : undefined,
     });
 
   } catch (error) {
@@ -139,60 +206,50 @@ export async function GET(request: NextRequest) {
 
     const userId = result.session.userId;
 
-    // Get query parameters
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
-    const status = searchParams.get("status");
-    const search = searchParams.get("search");
+    // Validate query parameters
+    const validation = await validateConversionFilters(request);
+    if (validation instanceof NextResponse) {
+      return validation; // Return validation error response
+    }
+    
+    const { data: queryParams } = validation;
+    const { page, limit, status, search } = queryParams;
 
-    // Build query
-    let query = db
+    // Build where conditions
+    const whereConditions = [eq(conversion.userId, userId)];
+    
+    if (status) {
+      whereConditions.push(eq(conversion.status, status));
+    }
+    
+    if (search) {
+      const searchCondition = or(
+        ilike(conversion.title, `%${search}%`),
+        ilike(conversion.author, `%${search}%`),
+        ilike(conversion.source, `%${search}%`)
+      );
+      if (searchCondition) {
+        whereConditions.push(searchCondition);
+      }
+    }
+
+    // Build query with pagination
+    const offset = (page - 1) * limit;
+    const query = db
       .select()
       .from(conversion)
-      .where(eq(conversion.userId, userId))
-      .orderBy(desc(conversion.createdAt));
-
-    // Apply filters
-    if (status) {
-      query = query.where(eq(conversion.status, status));
-    }
-
-    if (search) {
-      query = query.where(
-        or(
-          ilike(conversion.title, `%${search}%`),
-          ilike(conversion.author, `%${search}%`),
-          ilike(conversion.source, `%${search}%`)
-        )
-      );
-    }
-
-    // Apply pagination
-    const offset = (page - 1) * limit;
-    query = query.limit(limit).offset(offset);
+      .where(and(...whereConditions))
+      .orderBy(desc(conversion.createdAt))
+      .limit(limit)
+      .offset(offset);
 
     const conversions = await query;
 
-    // Get total count for pagination
+    // Get total count for pagination using same conditions
     const countQuery = db
       .select({ count: sql<number>`count(*)` })
       .from(conversion)
-      .where(eq(conversion.userId, userId));
-
-    if (status) {
-      countQuery.where(eq(conversion.status, status));
-    }
-
-    if (search) {
-      countQuery.where(
-        or(
-          ilike(conversion.title, `%${search}%`),
-          ilike(conversion.author, `%${search}%`),
-          ilike(conversion.source, `%${search}%`)
-        )
-      );
-    }
+      .where(and(...whereConditions));
 
     const [{ count }] = await countQuery;
 

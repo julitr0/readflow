@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { htmlContent, sourceUrl, customMetadata } = body;
+    const { htmlContent, customMetadata } = body;
 
     // Validate required fields
     if (!htmlContent) {

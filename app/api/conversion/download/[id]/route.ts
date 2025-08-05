@@ -53,7 +53,11 @@ export async function GET(
 }
 
 // Helper function to store conversion data (for demo purposes)
-export function storeConversion(id: string, htmlContent: string, metadata: any, filename: string) {
-  // This function is kept for compatibility but uses the shared storage
-  // In a real app, you'd store in a database
-} 
+// This function is kept for compatibility but uses the shared storage
+// In a real app, you'd store in a database
+function storeConversion(): void {
+  // Implementation placeholder
+}
+
+// Prevent unused function warning
+void storeConversion; 

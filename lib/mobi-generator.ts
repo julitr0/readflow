@@ -18,10 +18,11 @@ export class MobiGenerator {
   async generateMobiFile(
     htmlContent: string,
     metadata: ConversionMetadata,
-    options: MobiFileOptions = {}
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _options: MobiFileOptions = { title: metadata.title, author: metadata.author }
   ): Promise<{ buffer: Buffer; filename: string; size: number }> {
     try {
-      // Create enhanced HTML with proper e-book structure
+      // Create enhanced HTML with proper e-book structure  
       const epubHtml = this.createEpubHtml(htmlContent, metadata);
       
       // For demo purposes, create an HTML file that can be converted to EPUB

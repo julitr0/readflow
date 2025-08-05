@@ -93,7 +93,7 @@ These rules tailor the general guidelines to the ESP Copilot mono-repo.
 * **PS-5 (MUST)** Secrets (API keys, tokens) **must** come from environment variables managed by Supabase Functions, Vercel, or GitHub Actions secrets. Never commit secrets to the repo. `git-secrets` or equivalent hook enforces this.
 
 ##### 8.1.6 LLM Usage
-* **PS-6 (MUST)** Use `o3` model for planning chat flows; use `GPT-4o` for execution tasks. Budget enforcement logic must live in `packages/backend/ai-budget.ts` and have unit tests.
+* **PS-6 (MUST)** Use `claude-4-opus` model for planning chat flows; use `claude-4-sonnet` for execution tasks. Budget enforcement logic must live in `packages/backend/ai-budget.ts` and have unit tests.
 
 #### 8.2 ReadFlow Rules
 These rules tailor the general guidelines to the ReadFlow project.

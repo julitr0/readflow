@@ -24,7 +24,7 @@ export class EpubGenerator {
   async generateEpubFile(
     htmlContent: string,
     metadata: ConversionMetadata,
-    options: EpubOptions = {}
+    options: EpubOptions = { title: metadata.title, author: metadata.author }
   ): Promise<{ buffer: Buffer; filename: string; size: number }> {
     try {
       console.log('Starting EPUB generation process...');

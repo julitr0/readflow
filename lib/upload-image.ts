@@ -12,6 +12,40 @@ const r2 = new S3Client({
   },
 });
 
+// File type validation for images
+const allowedMimeTypes = new Set([
+  'image/jpeg',
+  'image/jpg', 
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml'
+]);
+
+export const validateImageBuffer = (buffer: Buffer): { isValid: boolean; mimeType?: string } => {
+  // Check file signatures (magic numbers)
+  const signatures = {
+    'image/jpeg': [0xFF, 0xD8, 0xFF],
+    'image/png': [0x89, 0x50, 0x4E, 0x47],
+    'image/gif': [0x47, 0x49, 0x46],
+    'image/webp': [0x52, 0x49, 0x46, 0x46]
+  };
+
+  for (const [mimeType, signature] of Object.entries(signatures)) {
+    if (signature.every((byte, index) => buffer[index] === byte)) {
+      return { isValid: allowedMimeTypes.has(mimeType), mimeType };
+    }
+  }
+
+  // For SVG, check for XML declaration or <svg tag
+  const textContent = buffer.slice(0, 1024).toString('utf-8');
+  if (textContent.includes('<svg') || textContent.includes('<?xml')) {
+    return { isValid: true, mimeType: 'image/svg+xml' };
+  }
+
+  return { isValid: false };
+};
+
 export const uploadImageAssets = async (buffer: Buffer, key: string) => {
   await r2.send(
     new PutObjectCommand({

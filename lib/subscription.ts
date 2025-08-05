@@ -1,28 +1,22 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db/drizzle";
-import { subscription } from "@/db/schema";
+import { userSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
+import { getSubscriptionStatus } from "@/lib/stripe";
 
 export type SubscriptionDetails = {
   id: string;
-  productId: string;
+  priceId: string;
   status: string;
-  amount: number;
-  currency: string;
-  recurringInterval: string;
-  currentPeriodStart: Date;
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;
-  canceledAt: Date | null;
-  organizationId: string | null;
 };
 
 export type SubscriptionDetailsResult = {
   hasSubscription: boolean;
   subscription?: SubscriptionDetails;
   error?: string;
-  errorType?: "CANCELED" | "EXPIRED" | "GENERAL";
 };
 
 export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResult> {
@@ -35,67 +29,44 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
       return { hasSubscription: false };
     }
 
-    const userSubscriptions = await db
+    // Get user settings with Stripe subscription info
+    const [settings] = await db
       .select()
-      .from(subscription)
-      .where(eq(subscription.userId, session.user.id));
+      .from(userSettings)
+      .where(eq(userSettings.userId, session.user.id))
+      .limit(1);
 
-    if (!userSubscriptions.length) {
+    if (!settings?.stripeCustomerId || !settings?.stripeSubscriptionId) {
       return { hasSubscription: false };
     }
 
-    // Get the most recent active subscription
-    const activeSubscription = userSubscriptions
-      .filter((sub) => sub.status === "active")
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-
-    if (!activeSubscription) {
-      // Check for canceled or expired subscriptions
-      const latestSubscription = userSubscriptions
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-
-      if (latestSubscription) {
-        const now = new Date();
-        const isExpired = new Date(latestSubscription.currentPeriodEnd) < now;
-        const isCanceled = latestSubscription.status === "canceled";
-
-        return {
-          hasSubscription: true,
-          subscription: {
-            id: latestSubscription.id,
-            productId: latestSubscription.productId,
-            status: latestSubscription.status,
-            amount: latestSubscription.amount,
-            currency: latestSubscription.currency,
-            recurringInterval: latestSubscription.recurringInterval,
-            currentPeriodStart: latestSubscription.currentPeriodStart,
-            currentPeriodEnd: latestSubscription.currentPeriodEnd,
-            cancelAtPeriodEnd: latestSubscription.cancelAtPeriodEnd,
-            canceledAt: latestSubscription.canceledAt,
-            organizationId: null,
-          },
-          error: isCanceled ? "Subscription has been canceled" : isExpired ? "Subscription has expired" : "Subscription is not active",
-          errorType: isCanceled ? "CANCELED" : isExpired ? "EXPIRED" : "GENERAL",
-        };
-      }
-
+    // Get current subscription status from Stripe
+    const stripeSubscription = await getSubscriptionStatus(settings.stripeCustomerId);
+    
+    if (!stripeSubscription) {
       return { hasSubscription: false };
     }
+
+    // Update local database with latest info
+    await db
+      .update(userSettings)
+      .set({
+        subscriptionStatus: stripeSubscription.status,
+        subscriptionPriceId: stripeSubscription.priceId,
+        subscriptionCurrentPeriodEnd: stripeSubscription.currentPeriodEnd,
+        subscriptionCancelAtPeriodEnd: stripeSubscription.cancelAtPeriodEnd,
+        updatedAt: new Date(),
+      })
+      .where(eq(userSettings.userId, session.user.id));
 
     return {
       hasSubscription: true,
       subscription: {
-        id: activeSubscription.id,
-        productId: activeSubscription.productId,
-        status: activeSubscription.status,
-        amount: activeSubscription.amount,
-        currency: activeSubscription.currency,
-        recurringInterval: activeSubscription.recurringInterval,
-        currentPeriodStart: activeSubscription.currentPeriodStart,
-        currentPeriodEnd: activeSubscription.currentPeriodEnd,
-        cancelAtPeriodEnd: activeSubscription.cancelAtPeriodEnd,
-        canceledAt: activeSubscription.canceledAt,
-        organizationId: null,
+        id: stripeSubscription.id,
+        priceId: stripeSubscription.priceId || '',
+        status: stripeSubscription.status,
+        currentPeriodEnd: stripeSubscription.currentPeriodEnd,
+        cancelAtPeriodEnd: stripeSubscription.cancelAtPeriodEnd,
       },
     };
   } catch (error) {
@@ -103,7 +74,6 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
     return {
       hasSubscription: false,
       error: "Failed to load subscription details",
-      errorType: "GENERAL",
     };
   }
 }
@@ -114,13 +84,13 @@ export async function isUserSubscribed(): Promise<boolean> {
   return result.hasSubscription && result.subscription?.status === "active";
 }
 
-// Helper to check if user has access to a specific product/tier
-export async function hasAccessToProduct(productId: string): Promise<boolean> {
+// Helper to check if user has access to a specific price/tier
+export async function hasAccessToPrice(priceId: string): Promise<boolean> {
   const result = await getSubscriptionDetails();
   return (
     result.hasSubscription &&
     result.subscription?.status === "active" &&
-    result.subscription?.productId === productId
+    result.subscription?.priceId === priceId
   );
 }
 
@@ -132,15 +102,18 @@ export async function getUserSubscriptionStatus(): Promise<"active" | "canceled"
     return "none";
   }
   
-  if (result.subscription?.status === "active") {
+  const status = result.subscription?.status;
+  
+  if (status === "active") {
     return "active";
   }
   
-  if (result.errorType === "CANCELED") {
+  if (status === "canceled") {
     return "canceled";
   }
   
-  if (result.errorType === "EXPIRED") {
+  // Check if expired (past due, unpaid, etc.)
+  if (status === "past_due" || status === "unpaid" || status === "incomplete_expired") {
     return "expired";
   }
   

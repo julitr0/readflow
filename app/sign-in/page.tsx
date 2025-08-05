@@ -25,10 +25,10 @@ function SignInContent() {
       <Card className="max-w-md w-full">
         <CardHeader>
           <CardTitle className="text-lg md:text-xl">
-            Welcome to Nextjs Starter Kit
+            Welcome back to ReadFlow
           </CardTitle>
           <CardDescription className="text-xs md:text-sm">
-            Use your google account to login to your account
+            Sign in to continue transforming newsletters into Kindle books
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -97,7 +97,7 @@ function SignInContent() {
                     d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
                   ></path>
                 </svg>
-                Login with Google
+                Continue with Google
               </Button>
             </div>
           </div>

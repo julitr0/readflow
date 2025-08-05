@@ -15,7 +15,7 @@ ReadFlow enables users to convert newsletters, articles, and email content into 
 ### Value Proposition
 - **Lower Cost**: More articles per dollar than competitors
 - **Better Value**: $3/month for 100 articles vs $5/month for 50 articles
-- **Seamless Experience**: Simple email forwarding to Kindle delivery
+- **Seamless Experience**: Simple email sharing to Kindle delivery
 - **High Quality**: Clean, readable formatting optimized for Kindle
 
 ### Competitive Analysis
@@ -31,7 +31,7 @@ ReadFlow enables users to convert newsletters, articles, and email content into 
 
 ### Core Functionality
 1. **Email Processing**: Users receive a unique email address to forward newsletters
-2. **Content Conversion**: HTML emails converted to Kindle-compatible format (MOBI/AZW3)
+2. **Content Conversion**: HTML emails converted to EPUB format for Kindle
 3. **Kindle Delivery**: Automatic delivery to user's Kindle device
 4. **Usage Tracking**: Monitor article count and subscription status
 5. **User Dashboard**: Manage settings, view history, track usage
@@ -39,9 +39,10 @@ ReadFlow enables users to convert newsletters, articles, and email content into 
 ### User Journey
 1. **Sign Up**: Create account, choose subscription tier
 2. **Setup**: Receive unique email address, configure Kindle email
-3. **Forward**: Send newsletters to provided email address
-4. **Receive**: Get converted content on Kindle automatically
-5. **Manage**: Monitor usage, adjust settings via dashboard
+3. **Share**: Use native email sharing from newsletters/websites to send articles to ReadFlow email
+4. **Automatic Processing**: ReadFlow converts shared articles to EPUB format using Calibre
+5. **Kindle Delivery**: Converted EPUB automatically sent to user's Kindle
+6. **Manage**: Monitor usage, adjust settings via mobile-responsive dashboard
 
 ## 3. Technical Architecture
 
@@ -51,9 +52,12 @@ ReadFlow enables users to convert newsletters, articles, and email content into 
 - **Database**: Neon PostgreSQL with Drizzle ORM
 - **Authentication**: Better Auth v1.2.8 with Google OAuth
 - **Payments**: Polar.sh integration
-- **File Storage**: Cloudflare R2 for email attachments
-- **Email Processing**: Custom email parsing and conversion service
+- **File Storage**: Cloudflare R2 for email attachments and converted files
+- **Email Processing**: Mailgun Inbound Email webhooks
+- **Content Conversion**: Calibre CLI in Docker containers
 - **Kindle Integration**: Email-to-Kindle delivery system
+- **Rate Limiting**: Redis-based rate limiting and queuing
+- **Caching**: Redis for session and temporary data storage
 
 ### System Architecture
 ```
@@ -74,7 +78,7 @@ Based on ReadBetter.io's app structure analysis:
 - **Subscription Selection**: Choose plan during signup (Starter $3/month or Pro $7/month)
 
 #### **Personal Email Address Setup**
-- **Unique Email Generation**: Each user gets a unique forwarding address (e.g., user123@readflow.com)
+- **Unique Email Generation**: Each user gets a unique email address for sharing articles (e.g., user123@readflow.com)
 - **Email Display**: Clear, prominent display of personal email address
 - **Copy Function**: One-click copy to clipboard
 - **Email Validation**: Verify email address format and availability
@@ -110,24 +114,30 @@ Based on ReadBetter.io's dashboard structure:
 - **Usage History**: Graph showing usage over time
 
 ### 4.2 Email Processing System
-- **Email Reception**: Handle incoming emails from users
-- **Content Extraction**: Parse HTML email content
-- **Image Handling**: Process and optimize images for Kindle
+- **Email Reception**: Mailgun Inbound Email webhooks to `/api/email/receive`
+- **Content Extraction**: Parse HTML email content from Mailgun payload
+- **Image Handling**: Process and optimize images for Kindle using Calibre
 - **Format Detection**: Identify newsletter source (Substack, Medium, etc.)
-- **Error Handling**: Graceful handling of malformed emails
+- **Error Handling**: Graceful handling of malformed emails with retry mechanism
+- **Rate Limiting**: 10 emails per hour per user, 100 emails per hour globally
+- **Queue System**: Redis-based queue for burst email handling
 
 ### 4.3 Content Conversion Engine
-- **HTML to Kindle**: Convert HTML newsletters to MOBI/AZW3 format
-- **Typography Optimization**: Clean, readable fonts and spacing
-- **Image Optimization**: Resize and compress images for Kindle
-- **Metadata Handling**: Preserve article titles, authors, dates
-- **Batch Processing**: Handle multiple articles efficiently
+- **Conversion Tool**: Calibre CLI running in Docker containers
+- **HTML to Kindle**: Convert HTML newsletters to EPUB format
+- **Typography Optimization**: Clean, readable fonts and spacing via Calibre
+- **Image Optimization**: Resize and compress images for Kindle automatically
+- **Metadata Handling**: Preserve article titles, authors, dates in ebook format
+- **Retry Logic**: Up to 3 conversion attempts with exponential backoff
+- **Error Reporting**: Detailed failure logs for debugging
 
 ### 4.4 Kindle Delivery System
-- **Email-to-Kindle**: Send converted files to user's Kindle
-- **Delivery Confirmation**: Track successful deliveries
-- **Retry Logic**: Handle failed deliveries with retry mechanism
-- **Format Validation**: Ensure Kindle compatibility
+- **Email-to-Kindle**: Send converted files to user's Kindle via SMTP
+- **Delivery Confirmation**: Track successful deliveries via email bounce handling
+- **Retry Logic**: Up to 3 delivery attempts with exponential backoff
+- **Format Validation**: Calibre ensures Kindle compatibility
+- **Failed Delivery Notification**: Email user after all retries fail
+- **File Cleanup**: Auto-delete delivered files after 7 days
 
 ### 4.5 User Dashboard
 - **Usage Statistics**: Track articles processed, remaining quota
@@ -197,7 +207,7 @@ Based on ReadBetter.io's dashboard structure:
 #### **Settings Page**
 - **Account Information**: Name, email, password change
 - **Kindle Configuration**: Kindle email address, device management
-- **Email Preferences**: Notification settings, forwarding options
+- **Email Preferences**: Notification settings, conversion options
 - **Subscription Management**: Current plan, upgrade/downgrade options
 
 #### **Billing Page**
@@ -300,13 +310,16 @@ subscriptions (
 - `POST /api/auth/signout` - User logout
 
 ### Email Processing
-- `POST /api/email/receive` - Webhook for incoming emails
+- `POST /api/email/receive` - Mailgun webhook for incoming emails
 - `GET /api/email/address` - Get user's unique email address
+- `POST /api/email/retry` - Retry failed email processing
 
 ### Conversions
-- `GET /api/conversions` - List user's conversions
+- `GET /api/conversions` - List user's conversions with pagination
 - `GET /api/conversions/:id` - Get specific conversion details
-- `POST /api/conversions/retry` - Retry failed conversion
+- `POST /api/conversions/retry` - Retry failed conversion (max 3 attempts)
+- `DELETE /api/conversions/:id` - Delete conversion and associated files
+- `GET /api/conversions/:id/download` - Download converted file (within 7 days)
 
 ### User Management
 - `GET /api/user/profile` - Get user profile
@@ -329,8 +342,11 @@ subscriptions (
 
 ### Content Security
 - **Content Ownership**: Users retain rights to their content
-- **No Storage**: Converted files deleted after delivery
+- **Hybrid Storage Policy**: 
+  - Successful conversions: Store files for 7 days, then auto-delete
+  - Failed conversions: Store original email for 24 hours for retry, then delete
 - **Privacy First**: No content analysis or tracking
+- **Automatic Cleanup**: Daily cron job removes expired files
 
 ## 10. Performance Requirements
 
@@ -340,11 +356,16 @@ subscriptions (
 - **Dashboard Loading**: < 2 seconds
 - **API Responses**: < 500ms
 
-### Scalability
+### Scalability 
 - **Concurrent Users**: Support 1000+ active users
-- **Email Processing**: Handle 100+ emails per hour
-- **Database**: Optimized queries and indexing
-- **CDN**: Global content delivery for fast loading
+- **Email Processing**: Handle 100+ emails per hour via Redis queue
+- **Database**: Optimized queries and indexing with Neon PostgreSQL
+- **CDN**: Cloudflare for global content delivery
+- **Container Scaling**: Auto-scaling Docker containers for Calibre conversion
+- **Backup Strategy**: 
+  - Neon PostgreSQL automatic backups with point-in-time recovery
+  - Daily database exports to Cloudflare R2
+  - Dead letter queue for failed webhook deliveries
 
 ## 11. Monitoring & Analytics
 

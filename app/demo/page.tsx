@@ -23,16 +23,24 @@ export default function DemoPage() {
   const [conversions, setConversions] = useState<ConversionResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleConversionComplete = (result: any) => {
+  const handleConversionComplete = (result: unknown) => {
+    const typedResult = result as {
+      conversionId: string;
+      metadata: { title: string; author: string; source: string; date: string };
+      filename: string;
+      fileSize: number;
+      fileContent: string;
+    };
+    
     const newConversion: ConversionResult = {
-      id: result.conversionId,
-      title: result.metadata.title,
-      author: result.metadata.author,
-      source: result.metadata.source,
-      filename: result.filename,
-      fileSize: result.fileSize,
-      fileContent: result.fileContent,
-      date: result.metadata.date,
+      id: typedResult.conversionId,
+      title: typedResult.metadata.title,
+      author: typedResult.metadata.author,
+      source: typedResult.metadata.source,
+      filename: typedResult.filename,
+      fileSize: typedResult.fileSize,
+      fileContent: typedResult.fileContent,
+      date: typedResult.metadata.date,
     };
     
     setConversions(prev => [newConversion, ...prev]);
@@ -203,7 +211,7 @@ function URLConversionForm({
   isLoading, 
   setIsLoading 
 }: { 
-  onConversionComplete: (result: any) => void;
+  onConversionComplete: (result: unknown) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
 }) {

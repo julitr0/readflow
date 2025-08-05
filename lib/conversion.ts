@@ -1,6 +1,8 @@
 import { JSDOM } from 'jsdom';
-import { optimize } from 'svgo';
-import sharp from 'sharp';
+import { spawn } from 'child_process';
+import fs from 'fs/promises';
+import path from 'path';
+import os from 'os';
 
 export interface ConversionMetadata {
   title: string;
@@ -37,15 +39,20 @@ export class ContentConverter {
   };
 
   /**
-   * Convert HTML content to Kindle-compatible format
+   * Convert HTML content to EPUB format using Calibre
    */
   async convertHtmlToKindle(
     htmlContent: string,
     metadata: ConversionMetadata,
     options: ConversionOptions = {}
   ): Promise<ConversionResult> {
+    let tempDir: string | null = null;
+    
     try {
       const mergedOptions = { ...this.defaultOptions, ...options };
+      
+      // Create temporary directory
+      tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'readflow-'));
       
       // Parse HTML content
       const dom = new JSDOM(htmlContent);
@@ -55,17 +62,36 @@ export class ContentConverter {
       const cleanedHtml = await this.cleanHtml(document, mergedOptions);
       
       // Process images
-      const processedHtml = await this.processImages(cleanedHtml, mergedOptions);
+      const processedHtml = await this.processImages(cleanedHtml);
       
       // Generate Kindle-compatible format
       const kindleContent = this.generateKindleFormat(processedHtml, metadata);
       
-      // Calculate file size (simplified)
-      const fileSize = Buffer.byteLength(kindleContent, 'utf8');
+      // Write HTML to temporary file
+      const htmlPath = path.join(tempDir, 'content.html');
+      await fs.writeFile(htmlPath, kindleContent, 'utf8');
+      
+      // Convert to EPUB using Calibre
+      const epubPath = path.join(tempDir, `${this.sanitizeFileName(metadata.title)}.epub`);
+      const calibreResult = await this.runCalibre(htmlPath, epubPath, metadata);
+      
+      if (!calibreResult.success) {
+        throw new Error(calibreResult.error || 'Calibre conversion failed');
+      }
+      
+      // Read EPUB file and get size
+      const epubBuffer = await fs.readFile(epubPath);
+      const fileSize = epubBuffer.length;
+      
+      // In production, upload to cloud storage (R2/S3)
+      // For now, we'll use a local path
+      const finalPath = path.join(process.cwd(), 'storage', 'conversions', path.basename(epubPath));
+      await fs.mkdir(path.dirname(finalPath), { recursive: true });
+      await fs.copyFile(epubPath, finalPath);
       
       return {
         success: true,
-        fileUrl: `converted/${Date.now()}.html`, // In real implementation, save to storage
+        fileUrl: finalPath,
         metadata,
         fileSize,
       };
@@ -74,6 +100,15 @@ export class ContentConverter {
         success: false,
         error: error instanceof Error ? error.message : 'Conversion failed',
       };
+    } finally {
+      // Clean up temporary directory
+      if (tempDir) {
+        try {
+          await fs.rm(tempDir, { recursive: true, force: true });
+        } catch (error) {
+          console.warn('Failed to clean up temp directory:', error);
+        }
+      }
     }
   }
 
@@ -106,7 +141,7 @@ export class ContentConverter {
   /**
    * Process and optimize images for Kindle
    */
-  private async processImages(html: string, options: ConversionOptions): Promise<string> {
+  private async processImages(html: string): Promise<string> {
     const dom = new JSDOM(html);
     const document = dom.window.document;
     const images = document.querySelectorAll('img');
@@ -117,7 +152,7 @@ export class ContentConverter {
 
       try {
         // Process image (in real implementation, download and optimize)
-        const optimizedSrc = await this.optimizeImage(src, options);
+        const optimizedSrc = await this.optimizeImage(src);
         img.setAttribute('src', optimizedSrc);
         
         // Add Kindle-friendly attributes
@@ -136,7 +171,7 @@ export class ContentConverter {
   /**
    * Optimize image for Kindle display
    */
-  private async optimizeImage(src: string, options: ConversionOptions): Promise<string> {
+  private async optimizeImage(src: string): Promise<string> {
     // In real implementation, this would:
     // 1. Download the image
     // 2. Resize to Kindle-friendly dimensions
@@ -315,6 +350,85 @@ export class ContentConverter {
       wordCount,
       readingTime,
     };
+  }
+
+  /**
+   * Run Calibre to convert HTML to EPUB
+   */
+  private async runCalibre(
+    inputPath: string,
+    outputPath: string,
+    metadata: ConversionMetadata
+  ): Promise<{ success: boolean; error?: string }> {
+    return new Promise((resolve) => {
+      const args = [
+        inputPath,
+        outputPath,
+        '--title', metadata.title,
+        '--authors', metadata.author,
+        '--pubdate', metadata.date,
+        '--publisher', 'ReadFlow',
+        '--language', 'en',
+        '--epub-version', '3',
+        '--pretty-print',
+        '--insert-metadata',
+        '--cover', this.getDefaultCoverPath(),
+      ];
+
+      const calibre = spawn('ebook-convert', args, {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      // let _stdout = '';
+      let stderr = '';
+
+      calibre.stdout?.on('data', () => {
+        // stdout data handling removed for now
+      });
+
+      calibre.stderr?.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      calibre.on('close', (code) => {
+        if (code === 0) {
+          resolve({ success: true });
+        } else {
+          console.error('Calibre error:', stderr);
+          resolve({ 
+            success: false, 
+            error: `Calibre conversion failed with code ${code}: ${stderr}` 
+          });
+        }
+      });
+
+      calibre.on('error', (error) => {
+        resolve({ 
+          success: false, 
+          error: `Failed to start Calibre: ${error.message}` 
+        });
+      });
+    });
+  }
+
+  /**
+   * Get default cover image path
+   */
+  private getDefaultCoverPath(): string {
+    // Return path to default cover image, or empty string if not available
+    const coverPath = path.join(process.cwd(), 'public', 'default-cover.jpg');
+    return coverPath;
+  }
+
+  /**
+   * Sanitize filename for safe use
+   */
+  private sanitizeFileName(title: string): string {
+    return title
+      .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .slice(0, 50) // Limit length
+      .trim();
   }
 
   /**

@@ -2,23 +2,27 @@ import Link from "next/link";
 
 const links = [
   {
-    title: "X",
-    href: "https://www.x.com/rasmickyy",
+    title: "Privacy Policy",
+    href: "/privacy-policy",
   },
   {
-    title: "YouTube",
-    href: "https://www.youtube.com/@rasmic",
+    title: "Terms of Service",
+    href: "/terms-of-service",
+  },
+  {
+    title: "Support",
+    href: "mailto:support@readflow.com",
   },
 ];
 
 export default function FooterSection() {
   return (
-    <footer className="bg-background py-12">
+    <footer className="bg-background py-12 border-t">
       <div className="mx-auto max-w-5xl px-6">
         <div className="flex flex-wrap justify-between gap-12">
           <div className="order-last flex items-center gap-3 md:order-first">
             <span className="text-muted-foreground block text-center text-sm">
-              © {new Date().getFullYear()} Exodus Labs, All rights reserved
+              © {new Date().getFullYear()} ReadFlow. All rights reserved.
             </span>
           </div>
 

@@ -16,11 +16,11 @@ export default function Integrations() {
         <div className="mx-auto max-w-5xl px-6">
           <div>
             <h2 className="text-balance text-3xl font-semibold md:text-4xl">
-              Built with the best tools
+              Powered by modern technology
             </h2>
             <p className="text-muted-foreground mt-3 text-lg">
-              Launch your project with confidence, knowing that you&apos;re
-              using the best tools available.
+              ReadFlow is built with cutting-edge tools to ensure reliable,
+              fast, and secure newsletter conversion and delivery.
             </p>
           </div>
 

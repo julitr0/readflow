@@ -117,8 +117,18 @@ export const userSettings = pgTable("userSettings", {
     .references(() => user.id, { onDelete: "cascade" }),
   kindleEmail: text("kindleEmail"),
   personalEmail: text("personalEmail").notNull(), // Unique ReadFlow email address
+  onboardingComplete: boolean("onboardingComplete").notNull().default(false),
   conversionPreferences: text("conversionPreferences"), // JSON string for conversion options
   notificationPreferences: text("notificationPreferences"), // JSON string for notification settings
+  
+  // Stripe subscription fields
+  stripeCustomerId: text("stripeCustomerId"),
+  stripeSubscriptionId: text("stripeSubscriptionId"),
+  subscriptionStatus: text("subscriptionStatus"),
+  subscriptionPriceId: text("subscriptionPriceId"),
+  subscriptionCurrentPeriodEnd: timestamp("subscriptionCurrentPeriodEnd"),
+  subscriptionCancelAtPeriodEnd: boolean("subscriptionCancelAtPeriodEnd").default(false),
+  
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
