@@ -9,25 +9,31 @@ import { RecentConversions } from "./_components/recent-conversions";
 import { PersonalEmailCard } from "./_components/personal-email-card";
 
 export default async function Dashboard() {
-  const result = await auth.api.getSession({
-    headers: await headers(),
-  });
+  try {
+    const result = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-  if (!result?.session?.userId) {
-    redirect("/sign-in");
+    if (!result?.session?.userId) {
+      redirect("/sign-in");
+    }
+
+    const userId = result.session.userId;
+
+    // Get user settings
+    const userSetting = await db
+      .select()
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId))
+      .limit(1);
+
+  // Check if user settings exist, if not redirect to onboarding
+  if (!userSetting[0]) {
+    redirect("/onboarding");
   }
-
-  const userId = result.session.userId;
-
-  // Get user settings
-  const userSetting = await db
-    .select()
-    .from(userSettings)
-    .where(eq(userSettings.userId, userId))
-    .limit(1);
-
+  
   // Check if onboarding is complete
-  if (!userSetting[0]?.onboardingComplete) {
+  if (!userSetting[0].onboardingComplete) {
     redirect("/onboarding");
   }
 
@@ -103,4 +109,8 @@ export default async function Dashboard() {
       </div>
     </section>
   );
+  } catch (error) {
+    console.error('Dashboard error:', error);
+    redirect("/onboarding");
+  }
 }
