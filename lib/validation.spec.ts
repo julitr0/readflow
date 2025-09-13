@@ -263,7 +263,7 @@ describe('Validation Middleware', () => {
 describe('validateMailgunSignature', () => {
   it('should validate correct Mailgun signature', () => {
     // This is a simplified test - in real usage, you'd test with actual signature calculation
-    const timestamp = '1234567890';
+    const timestamp = Math.floor(Date.now() / 1000).toString();
     const token = 'test-token';
     const webhookKey = 'test-webhook-key';
     

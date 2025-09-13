@@ -113,7 +113,7 @@ export class EpubGenerator {
       `--title="${metadata.title}"`,
       `--authors="${metadata.author}"`,
       `--language="${options.language || 'en'}"`,
-      `--publisher="${options.publisher || 'ReadFlow'}"`,
+      `--publisher="${options.publisher || 'Link to Reader'}"`,
       '--no-chapters-in-toc',
       '--no-default-epub-cover',
       '--preserve-cover-aspect-ratio',
@@ -270,7 +270,7 @@ export class EpubGenerator {
         </div>
         
         <footer class="footer">
-            <p>Converted by ReadFlow - Distraction-free reading on Kindle</p>
+            <p>Converted by Link to Reader - Distraction-free reading on Kindle</p>
             <p>Generated on ${new Date().toLocaleDateString()}</p>
         </footer>
     </article>

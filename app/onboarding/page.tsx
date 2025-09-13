@@ -14,12 +14,12 @@ import { toast } from "sonner";
 const steps = [
   {
     id: "welcome",
-    title: "Welcome to ReadFlow!",
+    title: "Welcome to Link to Reader!",
     description: "Transform your newsletters into distraction-free Kindle reading"
   },
   {
     id: "how-it-works",
-    title: "How ReadFlow Works",
+    title: "How Link to Reader Works",
     description: "Three simple steps to get started"
   },
   {
@@ -79,7 +79,7 @@ export default function OnboardingPage() {
           throw new Error("Failed to save settings");
         }
 
-        toast.success("Welcome to ReadFlow! Your setup is complete.");
+        toast.success("Welcome to Link to Reader! Your setup is complete.");
         router.push("/dashboard");
       } catch (error) {
         toast.error("Failed to save your settings. Please try again.");
@@ -98,7 +98,7 @@ export default function OnboardingPage() {
         <BookOpen className="w-10 h-10 text-blue-600" />
       </div>
       <div>
-        <h2 className="text-3xl font-bold mb-4">Welcome to ReadFlow!</h2>
+        <h2 className="text-3xl font-bold mb-4">Welcome to Link to Reader!</h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Transform your favorite newsletters and articles into beautifully formatted 
           books for distraction-free reading on your Kindle.
@@ -109,14 +109,14 @@ export default function OnboardingPage() {
           <Mail className="w-8 h-8 text-green-600 mb-2 mx-auto" />
           <h3 className="font-semibold">Forward Emails</h3>
           <p className="text-sm text-muted-foreground">
-            Forward newsletters to your personal ReadFlow address
+            Forward newsletters to your personal Link to Reader address
           </p>
         </div>
         <div className="p-4 border rounded-lg">
           <Smartphone className="w-8 h-8 text-blue-600 mb-2 mx-auto" />
           <h3 className="font-semibold">Convert URLs</h3>
           <p className="text-sm text-muted-foreground">
-            Paste article URLs directly into ReadFlow
+            Paste article URLs directly into Link to Reader
           </p>
         </div>
         <div className="p-4 border rounded-lg">
@@ -133,7 +133,7 @@ export default function OnboardingPage() {
   const renderHowItWorksStep = () => (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-3xl font-bold mb-4">How ReadFlow Works</h2>
+        <h2 className="text-3xl font-bold mb-4">How Link to Reader Works</h2>
         <p className="text-lg text-muted-foreground">
           Two ways to send articles, one seamless reading experience
         </p>
@@ -145,7 +145,7 @@ export default function OnboardingPage() {
           <Mail className="w-8 h-8 text-blue-600 mb-3" />
           <h3 className="text-lg font-semibold mb-2">Method 1: Email Articles</h3>
           <p className="text-sm text-muted-foreground">
-            Forward any newsletter or article email to your personal ReadFlow address
+            Forward any newsletter or article email to your personal Link to Reader address
           </p>
         </div>
         <div className="p-6 border rounded-lg bg-green-50">
@@ -165,7 +165,7 @@ export default function OnboardingPage() {
           <div>
             <h3 className="text-xl font-semibold mb-2">Send Us Your Article</h3>
             <p className="text-muted-foreground">
-              Either forward emails to your ReadFlow address or paste article URLs directly into the app.
+              Either forward emails to your Link to Reader address or paste article URLs directly into the app.
             </p>
           </div>
         </div>
@@ -177,7 +177,7 @@ export default function OnboardingPage() {
           <div>
             <h3 className="text-xl font-semibold mb-2">We Convert & Format</h3>
             <p className="text-muted-foreground">
-              ReadFlow extracts the content, removes ads and distractions, and formats it perfectly for Kindle reading.
+              Link to Reader extracts the content, removes ads and distractions, and formats it perfectly for Kindle reading.
             </p>
           </div>
         </div>

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const sender = emailData.From;
     const bodyHtml = emailData['body-html'];
 
-    // Extract personal email from recipient (e.g., user123@readflow.com -> user123)
+    // Extract personal email from recipient (e.g., user123@linktoreader.com -> user123)
     const personalEmail = recipient.toLowerCase();
     
     // Find user by personal email

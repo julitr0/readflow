@@ -1,8 +1,8 @@
-# ReadFlow - Product Requirements Document (PRD)
+# Link to Reader - Product Requirements Document (PRD)
 
 ## Executive Summary
 
-**Product Name**: ReadFlow  
+**Product Name**: Link to Reader  
 **Tagline**: "Transform newsletters into distraction-free reading on your Kindle"  
 **Competitive Advantage**: Lower pricing with better value proposition  
 **Target Market**: Newsletter subscribers, content creators, professionals who prefer Kindle reading
@@ -10,7 +10,7 @@
 ## 1. Product Vision
 
 ### Mission Statement
-ReadFlow enables users to convert newsletters, articles, and email content into Kindle-compatible formats for distraction-free reading, offering better pricing than competitors while maintaining high-quality conversion.
+Link to Reader enables users to convert newsletters, articles, and email content into Kindle-compatible formats for distraction-free reading, offering better pricing than competitors while maintaining high-quality conversion.
 
 ### Value Proposition
 - **Lower Cost**: More articles per dollar than competitors
@@ -19,7 +19,7 @@ ReadFlow enables users to convert newsletters, articles, and email content into 
 - **High Quality**: Clean, readable formatting optimized for Kindle
 
 ### Competitive Analysis
-| Feature | ReadBetter.io | ReadFlow |
+| Feature | ReadBetter.io | Link to Reader |
 |---------|---------------|----------|
 | Starter Plan | $5/month (50 articles) | $3/month (100 articles) |
 | Pro Plan | $10/month (200 articles) | $7/month (300 articles) |
@@ -39,8 +39,8 @@ ReadFlow enables users to convert newsletters, articles, and email content into 
 ### User Journey
 1. **Sign Up**: Create account, choose subscription tier
 2. **Setup**: Receive unique email address, configure Kindle email
-3. **Share**: Use native email sharing from newsletters/websites to send articles to ReadFlow email
-4. **Automatic Processing**: ReadFlow converts shared articles to EPUB format using Calibre
+3. **Share**: Use native email sharing from newsletters/websites to send articles to Link to Reader email
+4. **Automatic Processing**: Link to Reader converts shared articles to EPUB format using Calibre
 5. **Kindle Delivery**: Converted EPUB automatically sent to user's Kindle
 6. **Manage**: Monitor usage, adjust settings via mobile-responsive dashboard
 
@@ -61,7 +61,7 @@ ReadFlow enables users to convert newsletters, articles, and email content into 
 
 ### System Architecture
 ```
-User → Email Forward → ReadFlow Email Service → Content Parser → 
+User → Email Forward → Link to Reader Email Service → Content Parser → 
 Kindle Converter → Kindle Delivery → User's Kindle Device
 ```
 
@@ -78,7 +78,7 @@ Based on ReadBetter.io's app structure analysis:
 - **Subscription Selection**: Choose plan during signup (Starter $3/month or Pro $7/month)
 
 #### **Personal Email Address Setup**
-- **Unique Email Generation**: Each user gets a unique email address for sharing articles (e.g., user123@readflow.com)
+- **Unique Email Generation**: Each user gets a unique email address for sharing articles (e.g., user123@linktoreader.com)
 - **Email Display**: Clear, prominent display of personal email address
 - **Copy Function**: One-click copy to clipboard
 - **Email Validation**: Verify email address format and availability
@@ -162,13 +162,13 @@ Based on ReadBetter.io's successful landing page structure:
 
 #### **Hero Section**
 - **Primary Headline**: "Transform newsletters into distraction-free reading on your Kindle"
-- **Subheadline**: "ReadFlow delivers your favorite email newsletters and articles to Kindle in native e-book format. Read without distractions and with less eye strain."
+- **Subheadline**: "Link to Reader delivers your favorite email newsletters and articles to Kindle in native e-book format. Read without distractions and with less eye strain."
 - **Primary CTA**: "Start Reading Better - $3/month" (emphasizing competitive pricing)
 - **Secondary CTA**: "See How It Works" (demo or tutorial)
 - **Social Proof**: "Join thousands of happy readers" with user count
 
 #### **How It Works Section**
-- **Step 1**: "Forward any newsletter to your unique ReadFlow email"
+- **Step 1**: "Forward any newsletter to your unique Link to Reader email"
 - **Step 2**: "We convert it to Kindle format automatically"
 - **Step 3**: "Read distraction-free on your Kindle device"
 - **Visual Flow**: Simple icons or illustrations for each step
@@ -251,7 +251,7 @@ Based on ReadBetter.io's dashboard structure:
 
 ### Phase 3: Polish & Launch (Week 5-6)
 **Focus: Branding, testing, and launch preparation**
-1. **Brand Customization**: Update colors, logos, copy for ReadFlow
+1. **Brand Customization**: Update colors, logos, copy for Link to Reader
 2. **Testing**: Comprehensive testing of all features
 3. **Performance Optimization**: Speed and reliability improvements
 4. **Documentation**: User guides and setup instructions

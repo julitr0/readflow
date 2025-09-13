@@ -61,7 +61,7 @@ export default function DashboardSideBar() {
             className="flex items-center font-semibold hover:cursor-pointer"
             href="/"
           >
-            <span>ReadFlow</span>
+            <span>Link to Reader</span>
           </Link>
         </div>
 

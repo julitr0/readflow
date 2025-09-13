@@ -38,7 +38,7 @@ export default function FeaturesBenefits() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center mb-16">
           <h2 className="text-balance text-3xl font-semibold md:text-4xl mb-4">
-            Why ReadFlow Works Better
+            Why Link to Reader Works Better
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Built for speed, quality, and compatibility. Experience the

@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db/drizzle";
-import { conversion, user } from "@/db/schema";
+import { conversion, userSettings } from "@/db/schema";
 import { contentConverter, type ConversionMetadata } from "@/lib/conversion";
 import { validateConversionRequest, validateConversionFilters } from "@/lib/validation";
 import { kindleDelivery } from "@/lib/kindle-delivery";
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         // Fetch content from URL
         const response = await fetch(url, {
           headers: {
-            'User-Agent': 'ReadFlow/1.0 (Article Converter)',
+            'User-Agent': 'Link to Reader/1.0 (Article Converter)',
           },
         });
         
@@ -142,9 +142,9 @@ export async function POST(request: NextRequest) {
     if (sendToKindle) {
       // Get user's Kindle email
       const userRecord = await db
-        .select({ kindleEmail: user.kindleEmail })
-        .from(user)
-        .where(eq(user.id, userId))
+        .select({ kindleEmail: userSettings.kindleEmail })
+        .from(userSettings)
+        .where(eq(userSettings.userId, userId))
         .limit(1);
 
       if (!userRecord[0]?.kindleEmail) {
@@ -214,6 +214,9 @@ export async function GET(request: NextRequest) {
     
     const { data: queryParams } = validation;
     const { page, limit, status, search } = queryParams;
+    // TypeScript assertion: preprocess ensures these are numbers
+    const pageNum = page as number;
+    const limitNum = limit as number;
 
     // Build where conditions
     const whereConditions = [eq(conversion.userId, userId)];
@@ -234,13 +237,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query with pagination
-    const offset = (page - 1) * limit;
+    const offset = (pageNum - 1) * limitNum;
     const query = db
       .select()
       .from(conversion)
       .where(and(...whereConditions))
       .orderBy(desc(conversion.createdAt))
-      .limit(limit)
+      .limit(limitNum)
       .offset(offset);
 
     const conversions = await query;
@@ -256,10 +259,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       conversions,
       pagination: {
-        page,
-        limit,
+        page: pageNum,
+        limit: limitNum,
         total: count,
-        totalPages: Math.ceil(count / limit),
+        totalPages: Math.ceil(count / limitNum),
       },
     });
 

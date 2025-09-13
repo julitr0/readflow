@@ -40,7 +40,7 @@ describe('KindleDeliveryService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith({
         from: process.env.SMTP_USER,
         to: 'test@kindle.com',
-        subject: 'ReadFlow: Test Article',
+        subject: 'Link to Reader: Test Article',
         text: expect.stringContaining('Test Article'),
         html: expect.stringContaining('Test Article'),
         attachments: [{

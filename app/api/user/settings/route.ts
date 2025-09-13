@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     // Note: notificationsEnabled and autoDelivery would be used in full implementation
 
     // Generate personal email if not provided
-    const finalPersonalEmail = personalEmail || `${userId.slice(0, 8)}@readflow.com`;
+    const finalPersonalEmail = personalEmail || `${userId.slice(0, 8)}@linktoreader.com`;
 
     // Check if user settings exist
     const existingSettings = await db

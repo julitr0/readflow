@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       {
         title: metadata.title,
         author: metadata.author,
-        publisher: "ReadFlow",
+        publisher: "Link to Reader",
         language: "en",
         description: `Converted article from ${metadata.source}`,
       }

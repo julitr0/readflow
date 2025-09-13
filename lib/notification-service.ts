@@ -38,7 +38,7 @@ export class NotificationService {
       await this.transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to: userEmail,
-        subject: 'ReadFlow: Conversion Failed',
+        subject: 'Link to Reader: Conversion Failed',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -66,13 +66,13 @@ export class NotificationService {
             </div>
             
             <div style="border-top: 1px solid #eee; padding-top: 20px; color: #666; font-size: 14px;">
-              <p>Best regards,<br><strong>ReadFlow Team</strong></p>
+              <p>Best regards,<br><strong>Link to Reader Team</strong></p>
               <p>Transform newsletters into distraction-free Kindle reading</p>
             </div>
           </div>
         `,
         text: `
-ReadFlow: Conversion Failed
+Link to Reader: Conversion Failed
 
 Hi ${userName || 'there'},
 
@@ -88,7 +88,7 @@ What to do next:
 We apologize for the inconvenience and appreciate your patience.
 
 Best regards,
-ReadFlow Team
+Link to Reader Team
         `.trim(),
       });
 
@@ -114,7 +114,7 @@ ReadFlow Team
       await this.transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to: userEmail,
-        subject: 'ReadFlow: Approaching Monthly Limit',
+        subject: 'Link to Reader: Approaching Monthly Limit',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -146,12 +146,12 @@ ReadFlow Team
             </div>
             
             <div style="border-top: 1px solid #eee; padding-top: 20px; color: #666; font-size: 14px;">
-              <p>Best regards,<br><strong>ReadFlow Team</strong></p>
+              <p>Best regards,<br><strong>Link to Reader Team</strong></p>
             </div>
           </div>
         `,
         text: `
-ReadFlow: Approaching Monthly Limit
+Link to Reader: Approaching Monthly Limit
 
 Hi ${userName || 'there'},
 
@@ -166,7 +166,7 @@ To continue converting articles this month, consider upgrading to Pro:
 Upgrade at: ${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/payment
 
 Best regards,
-ReadFlow Team
+Link to Reader Team
         `.trim(),
       });
 
@@ -191,7 +191,7 @@ ReadFlow Team
       await this.transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to: userEmail,
-        subject: 'ReadFlow: Monthly Limit Reached',
+        subject: 'Link to Reader: Monthly Limit Reached',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #f8d7da; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -221,16 +221,16 @@ ReadFlow Team
                 </a>
               </div>
               
-              <p>Thank you for being a ReadFlow user!</p>
+              <p>Thank you for being a Link to Reader user!</p>
             </div>
             
             <div style="border-top: 1px solid #eee; padding-top: 20px; color: #666; font-size: 14px;">
-              <p>Best regards,<br><strong>ReadFlow Team</strong></p>
+              <p>Best regards,<br><strong>Link to Reader Team</strong></p>
             </div>
           </div>
         `,
         text: `
-ReadFlow: Monthly Limit Reached
+Link to Reader: Monthly Limit Reached
 
 Hi ${userName || 'there'},
 
@@ -245,10 +245,10 @@ Options to continue reading:
 
 Upgrade at: ${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/payment
 
-Thank you for being a ReadFlow user!
+Thank you for being a Link to Reader user!
 
 Best regards,
-ReadFlow Team
+Link to Reader Team
         `.trim(),
       });
 

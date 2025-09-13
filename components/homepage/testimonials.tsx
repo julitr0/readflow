@@ -7,7 +7,7 @@ export default function Testimonials() {
       name: "Sarah M.",
       role: "Newsletter Enthusiast",
       content:
-        "ReadFlow has transformed how I consume content. My Kindle is now my go-to for reading newsletters, and the formatting is perfect. The pricing is unbeatable compared to alternatives.",
+        "Link to Reader has transformed how I consume content. My Kindle is now my go-to for reading newsletters, and the formatting is perfect. The pricing is unbeatable compared to alternatives.",
       rating: 5,
       highlight: "Perfect formatting",
     },
@@ -15,7 +15,7 @@ export default function Testimonials() {
       name: "David K.",
       role: "Startup Founder",
       content:
-        "I read 50+ newsletters monthly for research. ReadFlow saves me hours and reduces eye strain significantly. The conversion speed is incredible - articles appear on my Kindle within minutes.",
+        "I read 50+ newsletters monthly for research. Link to Reader saves me hours and reduces eye strain significantly. The conversion speed is incredible - articles appear on my Kindle within minutes.",
       rating: 5,
       highlight: "Saves hours daily",
     },
@@ -23,7 +23,7 @@ export default function Testimonials() {
       name: "Maria L.",
       role: "Content Creator",
       content:
-        "As someone who struggled with ReadBetter's complex setup, ReadFlow was a breath of fresh air. Two clicks and I'm reading distraction-free. Customer support actually responds too!",
+        "As someone who struggled with ReadBetter's complex setup, Link to Reader was a breath of fresh air. Two clicks and I'm reading distraction-free. Customer support actually responds too!",
       rating: 5,
       highlight: "Simple setup",
     },
@@ -31,7 +31,7 @@ export default function Testimonials() {
       name: "James R.",
       role: "Finance Professional",
       content:
-        "I switched from ReadBetter after they raised prices. ReadFlow gives me 10x more articles for less money, plus the conversion quality is just as good. No brainer decision.",
+        "I switched from ReadBetter after they raised prices. Link to Reader gives me 10x more articles for less money, plus the conversion quality is just as good. No brainer decision.",
       rating: 5,
       highlight: "10x more value",
     },
@@ -47,7 +47,7 @@ export default function Testimonials() {
       name: "Alex P.",
       role: "Tech Executive",
       content:
-        "ReadFlow's dashboard is clean and mobile-friendly unlike the competition. I can manage everything from my phone and the conversion history is super helpful for finding old articles.",
+        "Link to Reader's dashboard is clean and mobile-friendly unlike the competition. I can manage everything from my phone and the conversion history is super helpful for finding old articles.",
       rating: 5,
       highlight: "Mobile-friendly",
     },
@@ -62,7 +62,7 @@ export default function Testimonials() {
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Join thousands of happy readers who&apos;ve made the switch to
-            distraction-free reading with ReadFlow.
+            distraction-free reading with Link to Reader.
           </p>
 
           <div className="flex items-center justify-center gap-2 mt-6">

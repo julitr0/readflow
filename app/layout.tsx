@@ -4,21 +4,21 @@ import { ThemeProvider } from "../components/provider";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 export const metadata: Metadata = {
-  title: "ReadFlow - Transform Newsletters into Kindle Books",
+  title: "Link to Reader - Transform Newsletters into Kindle Books",
   description:
-    "Convert your favorite newsletters into beautifully formatted Kindle books. Forward emails to your personal ReadFlow address and receive them as downloadable ebooks on your Kindle.",
+    "Convert your favorite newsletters into beautifully formatted Kindle books. Forward emails to your personal Link to Reader address and receive them as downloadable ebooks on your Kindle.",
   openGraph: {
-    title: "ReadFlow",
+    title: "Link to Reader",
     description:
-      "Convert your favorite newsletters into beautifully formatted Kindle books. Forward emails to your personal ReadFlow address and receive them as downloadable ebooks on your Kindle.",
-    url: "readflow.app",
-    siteName: "ReadFlow",
+      "Convert your favorite newsletters into beautifully formatted Kindle books. Forward emails to your personal Link to Reader address and receive them as downloadable ebooks on your Kindle.",
+    url: "linktoreader.com",
+    siteName: "Link to Reader",
     images: [
       {
         url: "https://jdj14ctwppwprnqu.public.blob.vercel-storage.com/nsk-w9fFwBBmLDLxrB896I4xqngTUEEovS.png",
         width: 1200,
         height: 630,
-        alt: "ReadFlow",
+        alt: "Link to Reader",
       },
     ],
     locale: "en-US",

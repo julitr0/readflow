@@ -6,6 +6,11 @@ import { eq } from 'drizzle-orm';
 import { logger, getCorrelationId } from '@/lib/logger';
 import type Stripe from 'stripe';
 
+// Extended Stripe subscription type with missing properties
+interface StripeSubscriptionWithPeriod extends Stripe.Subscription {
+  current_period_end: number;
+}
+
 export async function POST(request: NextRequest) {
   const correlationId = getCorrelationId(request);
   const context = logger.createContext('stripe-webhook', undefined, { correlationId });
@@ -130,7 +135,7 @@ async function handleSubscriptionCreated(
       stripeSubscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
       subscriptionPriceId: subscription.items.data[0]?.price.id,
-      subscriptionCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      subscriptionCurrentPeriodEnd: new Date((subscription as StripeSubscriptionWithPeriod).current_period_end * 1000),
       updatedAt: new Date(),
     })
     .where(eq(userSettings.userId, userId));
@@ -157,7 +162,7 @@ async function handleSubscriptionUpdated(
     .set({
       subscriptionStatus: subscription.status,
       subscriptionPriceId: subscription.items.data[0]?.price.id,
-      subscriptionCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      subscriptionCurrentPeriodEnd: new Date((subscription as StripeSubscriptionWithPeriod).current_period_end * 1000),
       subscriptionCancelAtPeriodEnd: subscription.cancel_at_period_end,
       updatedAt: new Date(),
     })

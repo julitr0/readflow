@@ -49,7 +49,7 @@ describe('/api/email/receive', () => {
 
   it('should successfully process valid email', async () => {
     const request = createMockRequest({
-      recipient: 'user123@readflow.com',
+      recipient: 'user123@linktoreader.com',
       sender: 'newsletter@example.com',
       'body-html': '<html><body><h1>Test Article</h1><p>Content here with enough words to pass validation checks.</p></body></html>',
     }, mockValidSignature);
@@ -69,7 +69,7 @@ describe('/api/email/receive', () => {
       limit: vi.fn().mockResolvedValue([{
         userId: 'test-user-id',
         kindleEmail: 'test@kindle.com',
-        personalEmail: 'user123@readflow.com',
+        personalEmail: 'user123@linktoreader.com',
       }]),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
@@ -111,7 +111,7 @@ describe('/api/email/receive', () => {
 
   it('should reject invalid signature', async () => {
     const request = createMockRequest({
-      recipient: 'user123@readflow.com',
+      recipient: 'user123@linktoreader.com',
       sender: 'newsletter@example.com',
       'body-html': '<html><body><h1>Test</h1></body></html>',
     }, {
@@ -137,7 +137,7 @@ describe('/api/email/receive', () => {
 
   it('should reject when user not found', async () => {
     const request = createMockRequest({
-      recipient: 'nonexistent@readflow.com',
+      recipient: 'nonexistent@linktoreader.com',
       sender: 'newsletter@example.com',
       'body-html': '<html><body><h1>Test</h1></body></html>',
     }, mockValidSignature);
@@ -167,7 +167,7 @@ describe('/api/email/receive', () => {
 
   it('should reject when Kindle email not configured', async () => {
     const request = createMockRequest({
-      recipient: 'user123@readflow.com',
+      recipient: 'user123@linktoreader.com',
       sender: 'newsletter@example.com',
       'body-html': '<html><body><h1>Test</h1></body></html>',
     }, mockValidSignature);
@@ -187,7 +187,7 @@ describe('/api/email/receive', () => {
       limit: vi.fn().mockResolvedValue([{
         userId: 'test-user-id',
         kindleEmail: null, // No Kindle email configured
-        personalEmail: 'user123@readflow.com',
+        personalEmail: 'user123@linktoreader.com',
       }]),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
@@ -201,7 +201,7 @@ describe('/api/email/receive', () => {
 
   it('should reject when usage limit exceeded', async () => {
     const request = createMockRequest({
-      recipient: 'user123@readflow.com',
+      recipient: 'user123@linktoreader.com',
       sender: 'newsletter@example.com',
       'body-html': '<html><body><h1>Test</h1></body></html>',
     }, mockValidSignature);
@@ -221,7 +221,7 @@ describe('/api/email/receive', () => {
       limit: vi.fn().mockResolvedValue([{
         userId: 'test-user-id',
         kindleEmail: 'test@kindle.com',
-        personalEmail: 'user123@readflow.com',
+        personalEmail: 'user123@linktoreader.com',
       }]),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
@@ -241,7 +241,7 @@ describe('/api/email/receive', () => {
 
   it('should reject invalid content', async () => {
     const request = createMockRequest({
-      recipient: 'user123@readflow.com',
+      recipient: 'user123@linktoreader.com',
       sender: 'newsletter@example.com',
       'body-html': '<html><body><p>Short</p></body></html>', // Too short
     }, mockValidSignature);
@@ -261,7 +261,7 @@ describe('/api/email/receive', () => {
       limit: vi.fn().mockResolvedValue([{
         userId: 'test-user-id',
         kindleEmail: 'test@kindle.com',
-        personalEmail: 'user123@readflow.com',
+        personalEmail: 'user123@linktoreader.com',
       }]),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
@@ -284,7 +284,7 @@ describe('/api/email/receive', () => {
 
   it('should handle missing required fields', async () => {
     const request = createMockRequest({
-      recipient: 'user123@readflow.com',
+      recipient: 'user123@linktoreader.com',
       // Missing body-html
     }, mockValidSignature);
 

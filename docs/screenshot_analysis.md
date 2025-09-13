@@ -1,7 +1,7 @@
 # ReadBetter.io Screenshot Analysis
 
 ## Overview
-This document analyzes the screenshots taken from ReadBetter.io's app to understand their user interface, user experience, and app structure. This analysis will inform ReadFlow's development and help refine our PRD.
+This document analyzes the screenshots taken from ReadBetter.io's app to understand their user interface, user experience, and app structure. This analysis will inform Link to Reader's development and help refine our PRD.
 
 ## Screenshot Inventory
 Based on the file timestamps and sizes, we have captured screenshots of:
@@ -69,7 +69,7 @@ Based on the file timestamps and sizes, we have captured screenshots of:
 - Troubleshooting
 - Contact support
 
-## Key Insights for ReadFlow Development
+## Key Insights for Link to Reader Development
 
 ### **User Experience Patterns**
 1. **Simple Onboarding**: Users need clear setup instructions
@@ -121,4 +121,4 @@ The screenshots provide valuable insights into ReadBetter.io's app structure and
 3. **Identify improvement opportunities** where we can differentiate
 4. **Prioritize development** based on core functionality needs
 
-The next step is to update our PRD with these insights and create detailed technical specifications for ReadFlow's development. 
+The next step is to update our PRD with these insights and create detailed technical specifications for Link to Reader's development. 

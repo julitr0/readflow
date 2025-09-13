@@ -33,7 +33,7 @@ export default async function SettingsPage() {
             Settings
           </h1>
           <p className="text-muted-foreground">
-            Configure your ReadFlow account and Kindle integration.
+            Configure your Link to Reader account and Kindle integration.
           </p>
         </div>
 

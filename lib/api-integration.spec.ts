@@ -28,7 +28,8 @@ vi.mock('@/db/drizzle', () => ({
 // Mock validation
 vi.mock('@/lib/validation', () => ({
   validateRequest: vi.fn(),
-  validateMailgunSignature: vi.fn()
+  validateMailgunSignature: vi.fn(),
+  validateEmailReceive: vi.fn()
 }));
 
 describe('API Integration Tests', () => {
@@ -60,7 +61,25 @@ describe('API Integration Tests', () => {
       const { POST } = await import('@/app/api/upload-image/route');
       
       vi.mocked(auth.api.getSession).mockResolvedValue({
-        session: { userId: 'test-user-id' }
+        session: {
+          id: 'test-session-id',
+          userId: 'test-user-id',
+          expiresAt: new Date(Date.now() + 86400000), // 24 hours from now
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          token: 'test-token',
+          ipAddress: '127.0.0.1',
+          userAgent: 'test-agent'
+        },
+        user: {
+          id: 'test-user-id',
+          name: 'Test User',
+          email: 'test@example.com',
+          emailVerified: true,
+          image: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
       });
       
       const formData = new FormData();

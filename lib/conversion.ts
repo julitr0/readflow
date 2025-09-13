@@ -300,7 +300,7 @@ export class ContentConverter {
         </div>
         
         <footer>
-            <p>Converted by ReadFlow - Distraction-free reading on Kindle</p>
+            <p>Converted by Link to Reader - Distraction-free reading on Kindle</p>
         </footer>
     </article>
 </body>
@@ -367,7 +367,7 @@ export class ContentConverter {
         '--title', metadata.title,
         '--authors', metadata.author,
         '--pubdate', metadata.date,
-        '--publisher', 'ReadFlow',
+        '--publisher', 'Link to Reader',
         '--language', 'en',
         '--epub-version', '3',
         '--pretty-print',
@@ -423,7 +423,7 @@ export class ContentConverter {
   /**
    * Sanitize filename for safe use
    */
-  private sanitizeFileName(title: string): string {
+  public sanitizeFileName(title: string): string {
     return title
       .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters
       .replace(/\s+/g, '_') // Replace spaces with underscores

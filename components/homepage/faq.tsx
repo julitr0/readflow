@@ -10,7 +10,7 @@ export default function FAQ() {
     {
       question: "How do I send newsletters to my Kindle?",
       answer:
-        "Simply forward any newsletter or article to your unique ReadFlow email address (like john@readflow.com). We'll automatically convert it and send it to your Kindle within 5 minutes.",
+        "Simply forward any newsletter or article to your unique Link to Reader email address (like john@linktoreader.com). We'll automatically convert it and send it to your Kindle within 5 minutes.",
     },
     {
       question: "What newsletter platforms do you support?",
@@ -20,7 +20,7 @@ export default function FAQ() {
     {
       question: "How is this different from ReadBetter.io?",
       answer:
-        "ReadFlow offers 10x more articles per dollar ($3 for 100 articles vs $5 for 10 articles), faster conversion times, simpler setup, and better customer support. Same quality, much better value.",
+        "Link to Reader offers 10x more articles per dollar ($3 for 100 articles vs $5 for 10 articles), faster conversion times, simpler setup, and better customer support. Same quality, much better value.",
     },
     {
       question: "Do images and formatting work on Kindle?",
@@ -35,7 +35,7 @@ export default function FAQ() {
     {
       question: "Can I use this with Kindle Unlimited?",
       answer:
-        "Absolutely! ReadFlow works with all Kindle devices and doesn't interfere with Kindle Unlimited or any other Amazon services. The articles appear in your personal documents.",
+        "Absolutely! Link to Reader works with all Kindle devices and doesn't interfere with Kindle Unlimited or any other Amazon services. The articles appear in your personal documents.",
     },
     {
       question: "What if my newsletter format isn't supported?",
@@ -67,8 +67,8 @@ export default function FAQ() {
             Frequently Asked Questions
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Everything you need to know about ReadFlow. Can&apos;t find what you&apos;re
-            looking for? Email us at support@readflow.com
+            Everything you need to know about Link to Reader. Can&apos;t find what you&apos;re
+            looking for? Email us at support@linktoreader.com
           </p>
         </div>
 
@@ -91,10 +91,10 @@ export default function FAQ() {
             <span className="text-sm text-muted-foreground">
               Email us at{" "}
               <a
-                href="mailto:support@readflow.com"
+                href="mailto:support@linktoreader.com"
                 className="text-primary hover:underline"
               >
-                support@readflow.com
+                support@linktoreader.com
               </a>{" "}
               and we&apos;ll respond within 24 hours
             </span>

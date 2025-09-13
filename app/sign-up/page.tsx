@@ -24,7 +24,7 @@ function SignInContent() {
       <Card className="max-w-md w-full">
         <CardHeader>
           <CardTitle className="text-lg md:text-xl">
-            Welcome to ReadFlow
+            Welcome to Link to Reader
           </CardTitle>
           <CardDescription className="text-xs md:text-sm">
             Transform your newsletters into Kindle-ready books. Sign in with Google to get started.

@@ -14,7 +14,7 @@ export function PersonalEmailCard({ personalEmail, userId }: PersonalEmailCardPr
   const [copied, setCopied] = useState(false);
   
   // Generate email if not set (in real app, this should be done server-side)
-  const email = personalEmail || `${userId.slice(0, 8)}@readflow.com`;
+  const email = personalEmail || `${userId.slice(0, 8)}@linktoreader.com`;
 
   const copyToClipboard = async () => {
     try {
@@ -31,7 +31,7 @@ export function PersonalEmailCard({ personalEmail, userId }: PersonalEmailCardPr
       <CardHeader>
         <div className="flex items-center gap-2">
           <IconMail className="w-5 h-5 text-blue-600" />
-          <CardTitle className="text-lg">Your ReadFlow Email</CardTitle>
+          <CardTitle className="text-lg">Your Link to Reader Email</CardTitle>
         </div>
         <CardDescription>
           Share articles to this email address to convert them to EPUB for your Kindle
@@ -65,7 +65,7 @@ export function PersonalEmailCard({ personalEmail, userId }: PersonalEmailCardPr
         </div>
         <div className="mt-3 text-sm text-muted-foreground">
           <strong>How to use:</strong> When reading newsletters or articles, click &quot;Share via Email&quot; 
-          and send to your ReadFlow address. We&apos;ll convert it to EPUB and deliver to your Kindle automatically.
+          and send to your Link to Reader address. We&apos;ll convert it to EPUB and deliver to your Kindle automatically.
         </div>
       </CardContent>
     </Card>

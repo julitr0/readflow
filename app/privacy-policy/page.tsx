@@ -29,7 +29,7 @@ export default function PrivacyPolicy() {
                   1. Introduction
                 </h2>
                 <p className="leading-relaxed">
-                  Welcome to ReadFlow (&aposwe,&apos &aposour,&apos or
+                  Welcome to Link to Reader (&aposwe,&apos &aposour,&apos or
                   &aposus&apos). We are committed to protecting your personal
                   information and your right to privacy. This Privacy Policy
                   explains how we collect, use, disclose, and safeguard your

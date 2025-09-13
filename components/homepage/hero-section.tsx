@@ -13,7 +13,7 @@ export default function HeroSection() {
               Transform newsletters into distraction-free reading on your Kindle
             </h1>
             <p className="text-muted-foreground text-lg lg:text-xl text-balance mb-8">
-              ReadFlow delivers your favorite email newsletters and articles to
+              Link to Reader delivers your favorite email newsletters and articles to
               Kindle in native e-book format. Read without distractions and with
               less eye strain.
             </p>

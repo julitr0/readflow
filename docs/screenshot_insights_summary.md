@@ -1,7 +1,7 @@
 # ReadBetter.io Screenshot Insights Summary
 
 ## Overview
-This document summarizes the key insights gained from analyzing ReadBetter.io's app screenshots and how they've informed our ReadFlow PRD development.
+This document summarizes the key insights gained from analyzing ReadBetter.io's app screenshots and how they've informed our Link to Reader PRD development.
 
 ## Key Insights from Screenshots
 
@@ -104,4 +104,4 @@ The updated PRD now includes detailed specifications for:
 - Settings and configuration pages
 - Help and support structure
 
-This gives us a solid foundation for building ReadFlow with confidence that we're addressing the right user needs and creating a competitive product. 
+This gives us a solid foundation for building Link to Reader with confidence that we're addressing the right user needs and creating a competitive product. 

@@ -1,11 +1,16 @@
 import Stripe from 'stripe';
 
+// Extended Stripe subscription type with missing properties
+interface StripeSubscriptionWithPeriod extends Stripe.Subscription {
+  current_period_end: number;
+}
+
 // Only initialize Stripe if the secret key is available
 let stripe: Stripe | null = null;
 
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-01-27.acacia',
+    apiVersion: '2025-06-30.basil',
     typescript: true,
   });
 }
@@ -110,13 +115,17 @@ export async function getSubscriptionStatus(customerId: string) {
     return null;
   }
 
-  const subscription = subscriptions.data[0];
+  const subscription = subscriptions.data[0] as StripeSubscriptionWithPeriod;
+  const price = subscription.items.data[0]?.price;
   return {
     id: subscription.id,
     status: subscription.status,
     currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-    priceId: subscription.items.data[0]?.price.id,
+    priceId: price?.id,
     cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    amount: price?.unit_amount || 0,
+    currency: price?.currency || 'usd',
+    recurringInterval: price?.recurring?.interval || 'month',
   };
 }
 

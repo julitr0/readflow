@@ -3,6 +3,13 @@ import { contentConverter, ConversionMetadata } from './conversion';
 import fs from 'fs/promises';
 import { spawn } from 'child_process';
 import { EventEmitter } from 'events';
+import type { ChildProcess } from 'child_process';
+
+// Mock process interface
+interface MockChildProcess extends EventEmitter {
+  stdout: EventEmitter;
+  stderr: EventEmitter;
+}
 
 // Mock dependencies
 vi.mock('fs/promises');
@@ -147,14 +154,10 @@ describe('ContentConverter', () => {
 
     it('should successfully convert HTML to EPUB', async () => {
       // Mock successful Calibre execution
-      const mockProcess = new EventEmitter();
-      // @ts-expect-error - adding properties for ChildProcess mock
-      mockProcess.stdout = new EventEmitter();
-      // @ts-expect-error - adding properties for ChildProcess mock
-      mockProcess.stderr = new EventEmitter();
+      const mockProcess = new EventEmitter() as MockChildProcess;
       mockProcess.stdout = new EventEmitter();
       mockProcess.stderr = new EventEmitter();
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as ChildProcess);
 
       const html = '<html><body><p>Test content for conversion</p></body></html>';
       
@@ -176,14 +179,10 @@ describe('ContentConverter', () => {
 
     it('should handle Calibre conversion failure', async () => {
       // Mock failed Calibre execution
-      const mockProcess = new EventEmitter();
-      // @ts-expect-error - adding properties for ChildProcess mock
-      mockProcess.stdout = new EventEmitter();
-      // @ts-expect-error - adding properties for ChildProcess mock
-      mockProcess.stderr = new EventEmitter();
+      const mockProcess = new EventEmitter() as MockChildProcess;
       mockProcess.stdout = new EventEmitter();
       mockProcess.stderr = new EventEmitter();
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as ChildProcess);
 
       const html = '<html><body><p>Test content</p></body></html>';
       
@@ -230,14 +229,12 @@ describe('ContentConverter', () => {
 
   describe('sanitizeFileName', () => {
     it('should sanitize special characters', () => {
-      // @ts-expect-error - accessing private method for testing
       const converter = contentConverter;
       const result = converter.sanitizeFileName('Test: Article & More!');
       expect(result).toBe('Test_Article_More');
     });
 
     it('should limit filename length', () => {
-      // @ts-expect-error - accessing private method for testing
       const converter = contentConverter;
       const longTitle = 'Very long title that exceeds the maximum length limit for filenames';
       const result = converter.sanitizeFileName(longTitle);
@@ -245,7 +242,6 @@ describe('ContentConverter', () => {
     });
 
     it('should handle empty strings', () => {
-      // @ts-expect-error - accessing private method for testing
       const converter = contentConverter;
       const result = converter.sanitizeFileName('');
       expect(result).toBe('');

@@ -62,24 +62,24 @@ export default function CompetitiveComparison() {
             Honest Comparison
           </Badge>
           <h2 className="text-balance text-3xl font-semibold md:text-4xl mb-4">
-            ReadFlow vs ReadBetter.io
+            Link to Reader vs ReadBetter.io
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Both services deliver newsletters to Kindle, but ReadFlow offers
+            Both services deliver newsletters to Kindle, but Link to Reader offers
             significantly better value and a superior user experience.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {/* ReadFlow Card */}
+          {/* Link to Reader Card */}
           <Card className="relative border-primary/50 shadow-lg">
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
               <Badge className="bg-primary text-primary-foreground">
-                ReadFlow (Recommended)
+                Link to Reader (Recommended)
               </Badge>
             </div>
             <CardHeader className="text-center pt-8">
-              <CardTitle className="text-2xl">ReadFlow</CardTitle>
+              <CardTitle className="text-2xl">Link to Reader</CardTitle>
               <div className="text-3xl font-bold text-primary">$4.99/month</div>
               <p className="text-sm text-muted-foreground">
                 100 articles • Better value
@@ -169,7 +169,7 @@ export default function CompetitiveComparison() {
                   <tr className="border-b">
                     <th className="text-left py-3 px-4">Feature</th>
                     <th className="text-center py-3 px-4 text-primary font-semibold">
-                      ReadFlow
+                      Link to Reader
                     </th>
                     <th className="text-center py-3 px-4">ReadBetter.io</th>
                   </tr>

@@ -43,8 +43,8 @@ export class KindleDeliveryService {
         const result = await this.transporter.sendMail({
           from: process.env.SMTP_FROM || process.env.SMTP_USER,
           to: kindleEmail,
-          subject: `ReadFlow: ${title}`,
-          text: `Your article "${title}" has been converted and is ready to read on your Kindle.\n\nEnjoy distraction-free reading!\n\n-- ReadFlow`,
+          subject: `Link to Reader: ${title}`,
+          text: `Your article "${title}" has been converted and is ready to read on your Kindle.\n\nEnjoy distraction-free reading!\n\n-- Link to Reader`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px;">
               <h2>Your article is ready! 📚</h2>
@@ -53,7 +53,7 @@ export class KindleDeliveryService {
               <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
               <p style="color: #666; font-size: 14px;">
                 Enjoy distraction-free reading!<br>
-                <strong>ReadFlow</strong> - Transform newsletters into Kindle reading
+                <strong>Link to Reader</strong> - Transform newsletters into Kindle reading
               </p>
             </div>
           `,

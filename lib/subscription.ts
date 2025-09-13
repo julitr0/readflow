@@ -7,10 +7,13 @@ import { getSubscriptionStatus } from "@/lib/stripe";
 
 export type SubscriptionDetails = {
   id: string;
-  priceId: string;
+  priceId?: string;
   status: string;
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;
+  amount: number;
+  currency: string;
+  recurringInterval: string;
 };
 
 export type SubscriptionDetailsResult = {
@@ -63,10 +66,13 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
       hasSubscription: true,
       subscription: {
         id: stripeSubscription.id,
-        priceId: stripeSubscription.priceId || '',
+        priceId: stripeSubscription.priceId,
         status: stripeSubscription.status,
         currentPeriodEnd: stripeSubscription.currentPeriodEnd,
         cancelAtPeriodEnd: stripeSubscription.cancelAtPeriodEnd,
+        amount: stripeSubscription.amount,
+        currency: stripeSubscription.currency,
+        recurringInterval: stripeSubscription.recurringInterval,
       },
     };
   } catch (error) {

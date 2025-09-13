@@ -17,10 +17,13 @@ import { useEffect, useState } from "react";
 
 type SubscriptionDetails = {
   id: string;
-  priceId: string;
+  priceId?: string;
   status: string;
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;
+  amount: number;
+  currency: string;
+  recurringInterval: string;
 };
 
 type SubscriptionDetailsResult = {

@@ -1,6 +1,6 @@
 # Environment Setup Guide
 
-This guide walks you through setting up all required environment variables for ReadFlow.
+This guide walks you through setting up all required environment variables for Link to Reader.
 
 ## Quick Start
 
@@ -56,7 +56,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
-SMTP_FROM=noreply@readflow.com
+SMTP_FROM=noreply@linktoreader.com
 MAILGUN_WEBHOOK_SIGNING_KEY=your-mailgun-webhook-signing-key
 ```
 
@@ -125,7 +125,7 @@ NEXT_PUBLIC_STRIPE_PRO_PRICE_ID=price_pro_monthly_id
 2. Generate API key from API Keys section
 3. (Optional) Create [Perplexity](https://perplexity.ai) account for enhanced processing
 
-**Note:** These are only needed if you plan to use AI-powered content processing features. The core ReadFlow functionality works without them.
+**Note:** These are only needed if you plan to use AI-powered content processing features. The core Link to Reader functionality works without them.
 
 ## Validation
 

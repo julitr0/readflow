@@ -32,7 +32,7 @@ export function KindleSettingsForm({ userId, currentSettings }: KindleSettingsFo
   const [copied, setCopied] = useState(false);
 
   // Generate personal email if not set
-  const personalEmail = currentSettings?.personalEmail || `${userId.slice(0, 8)}@readflow.com`;
+  const personalEmail = currentSettings?.personalEmail || `${userId.slice(0, 8)}@linktoreader.com`;
 
   const handleSave = async () => {
     if (!kindleEmail.trim()) {
@@ -93,7 +93,7 @@ export function KindleSettingsForm({ userId, currentSettings }: KindleSettingsFo
         <CardHeader>
           <div className="flex items-center gap-2">
             <IconMail className="w-5 h-5 text-blue-600" />
-            <CardTitle>Your ReadFlow Email</CardTitle>
+            <CardTitle>Your Link to Reader Email</CardTitle>
           </div>
           <CardDescription>
             Share articles to this email address to convert them to EPUB for your Kindle
@@ -162,7 +162,7 @@ export function KindleSettingsForm({ userId, currentSettings }: KindleSettingsFo
             <ol className="text-sm text-amber-700 dark:text-amber-300 space-y-1 list-decimal list-inside">
               <li>Go to Amazon&apos;s &quot;Manage Your Content and Devices&quot;</li>
               <li>Find your Kindle email address (usually ends with @kindle.com)</li>
-              <li>Add <strong>readflow@mg.readflow.com</strong> to your approved email list</li>
+              <li>Add <strong>noreply@linktoreader.com</strong> to your approved email list</li>
               <li>Enter your Kindle email address above and save</li>
             </ol>
           </div>
@@ -180,7 +180,7 @@ export function KindleSettingsForm({ userId, currentSettings }: KindleSettingsFo
       {/* How It Works Card */}
       <Card>
         <CardHeader>
-          <CardTitle>How ReadFlow Works</CardTitle>
+          <CardTitle>How Link to Reader Works</CardTitle>
           <CardDescription>
             Simple steps to get articles on your Kindle
           </CardDescription>
@@ -194,7 +194,7 @@ export function KindleSettingsForm({ userId, currentSettings }: KindleSettingsFo
               <div>
                 <h4 className="font-medium">Share via Email</h4>
                 <p className="text-sm text-muted-foreground">
-                  When reading newsletters or articles, click &quot;Share via Email&quot; and send to your ReadFlow address
+                  When reading newsletters or articles, click &quot;Share via Email&quot; and send to your Link to Reader address
                 </p>
               </div>
             </div>

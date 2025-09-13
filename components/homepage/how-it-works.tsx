@@ -7,7 +7,7 @@ export default function HowItWorks() {
       icon: Mail,
       title: "Forward any newsletter",
       description:
-        "Send newsletters and articles to your unique ReadFlow email address using your email app's share/forward feature.",
+        "Send newsletters and articles to your unique Link to Reader email address using your email app's share/forward feature.",
       step: "01",
     },
     {
@@ -31,7 +31,7 @@ export default function HowItWorks() {
       <div className="mx-auto max-w-5xl px-6">
         <div className="text-center mb-16">
           <h2 className="text-balance text-3xl font-semibold md:text-4xl mb-4">
-            How ReadFlow Works
+            How Link to Reader Works
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Transform any newsletter into distraction-free reading in just three

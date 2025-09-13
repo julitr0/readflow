@@ -11,7 +11,7 @@ const links = [
   },
   {
     title: "Support",
-    href: "mailto:support@readflow.com",
+    href: "mailto:support@linktoreader.com",
   },
 ];
 
@@ -22,7 +22,7 @@ export default function FooterSection() {
         <div className="flex flex-wrap justify-between gap-12">
           <div className="order-last flex items-center gap-3 md:order-first">
             <span className="text-muted-foreground block text-center text-sm">
-              © {new Date().getFullYear()} ReadFlow. All rights reserved.
+              © {new Date().getFullYear()} Link to Reader. All rights reserved.
             </span>
           </div>
 

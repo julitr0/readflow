@@ -1,11 +1,11 @@
-# ReadFlow
+# Link to Reader
 
-Transform newsletters into distraction-free reading on your Kindle. ReadFlow converts your favorite email newsletters and articles into Kindle-compatible format for seamless, distraction-free reading.
+Transform newsletters into distraction-free reading on your Kindle. Link to Reader converts your favorite email newsletters and articles into Kindle-compatible format for seamless, distraction-free reading.
 
 ## ✨ Features
 
 ### 📧 Email Processing & Conversion
-- **Personal Email Address**: Each user gets a unique ReadFlow email address
+- **Personal Email Address**: Each user gets a unique Link to Reader email address
 - **Newsletter Support**: Compatible with Substack, Medium, ConvertKit, and more
 - **HTML to Kindle**: Automatic conversion to MOBI/AZW3 format
 - **Metadata Preservation**: Maintains article title, author, and date
@@ -123,7 +123,7 @@ R2_UPLOAD_IMAGE_ACCESS_KEY_ID="your-r2-access-key-id"
 R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY="your-r2-secret-access-key"
 R2_UPLOAD_IMAGE_BUCKET_NAME="your-r2-bucket-name"
 
-# ReadFlow Pricing Tiers
+# Link to Reader Pricing Tiers
 NEXT_PUBLIC_STARTER_TIER="your-starter-product-id"
 NEXT_PUBLIC_PRO_TIER="your-pro-product-id"
 ```

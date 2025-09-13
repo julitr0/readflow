@@ -25,7 +25,7 @@ export default function SupportedPlatforms() {
             Works With Your Favorite Newsletters
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            ReadFlow supports 100+ newsletter platforms and formats. If you can
+            Link to Reader supports 100+ newsletter platforms and formats. If you can
             email it, we can convert it to your Kindle.
           </p>
         </div>

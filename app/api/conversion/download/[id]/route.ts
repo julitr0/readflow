@@ -26,7 +26,7 @@ export async function GET(
       {
         title: conversion.metadata.title,
         author: conversion.metadata.author,
-        publisher: "ReadFlow",
+        publisher: "Link to Reader",
         language: "en",
         description: `Converted article from ${conversion.metadata.source}`,
       }

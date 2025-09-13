@@ -19,7 +19,7 @@ export default function Integrations() {
               Powered by modern technology
             </h2>
             <p className="text-muted-foreground mt-3 text-lg">
-              ReadFlow is built with cutting-edge tools to ensure reliable,
+              Link to Reader is built with cutting-edge tools to ensure reliable,
               fast, and secure newsletter conversion and delivery.
             </p>
           </div>

@@ -173,7 +173,7 @@ export class MobiGenerator {
         </div>
         
         <footer class="footer">
-            <p>Converted by ReadFlow - Distraction-free reading on Kindle</p>
+            <p>Converted by Link to Reader - Distraction-free reading on Kindle</p>
             <p>Generated on ${new Date().toLocaleDateString()}</p>
         </footer>
     </article>

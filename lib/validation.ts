@@ -67,7 +67,7 @@ export const conversionRequestSchema = z.object({
   url: urlSchema.optional(),
   sendToKindle: z.boolean().optional().default(false),
   // HTML content-based conversion (legacy)
-  htmlContent: z.string().optional(),
+  htmlContent: z.string().min(10, 'HTML content must be at least 10 characters long').optional(),
   sourceUrl: urlSchema.optional(),
   customMetadata: z.object({
     title: z.string().optional(),
@@ -85,14 +85,22 @@ export const userSettingsSchema = z.object({
   kindleEmail: emailSchema.optional(),
   personalEmail: emailSchema.optional(),
   onboardingComplete: z.boolean().optional(),
-  notificationsEnabled: z.boolean().default(true).optional(),
-  autoDelivery: z.boolean().default(true).optional(),
+  notificationsEnabled: z.boolean().optional().default(true),
+  autoDelivery: z.boolean().optional().default(true),
+  conversionPreferences: z.string().optional(),
+  notificationPreferences: z.string().optional(),
 });
 
 // Query parameter validation schemas
 export const paginationSchema = z.object({
-  page: z.string().regex(/^\d+$/, 'Page must be a number').transform(Number).refine(n => n > 0, 'Page must be positive').default('1'),
-  limit: z.string().regex(/^\d+$/, 'Limit must be a number').transform(Number).refine(n => n > 0 && n <= 100, 'Limit must be between 1 and 100').default('20'),
+  page: z.preprocess(
+    (val) => val ?? '1',
+    z.string().regex(/^\d+$/, 'Page must be a number').transform(Number).refine(n => n > 0, 'Page must be positive')
+  ),
+  limit: z.preprocess(
+    (val) => val ?? '20', 
+    z.string().regex(/^\d+$/, 'Limit must be a number').transform(Number).refine(n => n > 0 && n <= 100, 'Limit must be between 1 and 100')
+  ),
 });
 
 export const conversionFiltersSchema = z.object({

@@ -52,6 +52,17 @@ These rules ensure maintainability, safety, and developer velocity.
 
 ---
 
+### 4 — Session Documentation
+
+- **D-1 (MUST)** Check for existing session files in `.claude/sessions/` when starting work on a feature.
+- **D-2 (MUST)** Create/update session files using format `YYYY-MM-DD-{branch-name}-session.md`.
+- **D-3 (MUST)** Update session documentation before creating pull requests.
+- **D-4 (SHOULD)** Document technical decisions and trade-offs as they are made, not retroactively.
+- **D-5 (SHOULD)** Include code examples for complex implementations or API changes.
+- **D-6 (SHOULD)** Record blockers immediately when encountered to maintain context for future sessions.
+
+---
+
 ### 5 — Code Organization
 
 - **O-1 (MUST)** Place code in `packages/shared` only if used by ≥ 2 packages.
@@ -73,27 +84,6 @@ These rules ensure maintainability, safety, and developer velocity.
 ---
 
 ### 8 — Project-specific Rules
-
-#### 8.1 ESP Copilot Rules
-These rules tailor the general guidelines to the ESP Copilot mono-repo.
-
-##### 8.1.1 UI & Visual Testing
-* **PS-1 (MUST)** UI components (Shadcn/ui & Tailwind) may skip strict TDD provided they are covered by Storybook snapshots or Playwright visual-regression tests.
-
-##### 8.1.2 Documentation & Comments
-* **PS-2 (MUST)** Every exported function, React component, and Supabase edge function requires a concise JSDoc block explaining purpose, parameters, and example usage.
-
-##### 8.1.3 Prompt Builders & Statistical Logic
-* **PS-3 (MUST)** Prompt-construction helpers and statistical evaluators must have snapshot or property-based tests to guard against silent changes.
-
-##### 8.1.4 Browser-extension Selectors
-* **PS-4 (MUST)** Automation scripts must target `data-testid` or `data-esp-copilot` attributes. Fallback to class selectors only with accompanying e2e tests.
-
-##### 8.1.5 Secrets & Configuration
-* **PS-5 (MUST)** Secrets (API keys, tokens) **must** come from environment variables managed by Supabase Functions, Vercel, or GitHub Actions secrets. Never commit secrets to the repo. `git-secrets` or equivalent hook enforces this.
-
-##### 8.1.6 LLM Usage
-* **PS-6 (MUST)** Use `claude-4-opus` model for planning chat flows; use `claude-4-sonnet` for execution tasks. Budget enforcement logic must live in `packages/backend/ai-budget.ts` and have unit tests.
 
 #### 8.2 ReadFlow Rules
 These rules tailor the general guidelines to the ReadFlow project.
@@ -277,6 +267,66 @@ feat: a commit of the type feat introduces a new feature to the codebase (this c
 BREAKING CHANGE: a commit that has a footer BREAKING CHANGE:, or appends a ! after the type/scope, introduces a breaking API change (correlating with MAJOR in Semantic Versioning). A BREAKING CHANGE can be part of commits of any type.
 types other than fix: and feat: are allowed, for example @commitlint/config-conventional (based on the Angular convention) recommends build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, and others.
 footers other than BREAKING CHANGE: <description> may be provided and follow a convention similar to git trailer format.
+```
+
+### QDOC
+
+When I type "qdoc", this means:
+
+```
+Create or update a comprehensive session documentation in .claude/sessions/ with format: YYYY-MM-DD-{branch-name}-session.md
+
+Include the following sections:
+1. **Session Summary** (1-2 paragraphs)
+   - High-level overview of what was accomplished
+   - Key problems solved and features implemented
+
+2. **Changes Made**
+   - List of files modified/created with brief descriptions
+   - Major refactorings or architectural changes
+   - Dependencies added or removed
+
+3. **Technical Decisions**
+   - Why specific approaches were chosen
+   - Trade-offs considered
+   - Alternatives that were rejected and why
+
+4. **Testing & Validation**
+   - Tests added or modified
+   - Manual testing performed
+   - Known edge cases or limitations
+
+5. **Next Steps**
+   - Immediate follow-up tasks
+   - Future improvements identified
+   - Technical debt introduced (if any)
+
+6. **Blockers & Issues**
+   - Unresolved problems
+   - Dependencies on external factors
+   - Areas needing clarification
+
+7. **Code Examples** (if relevant)
+   - Key code snippets demonstrating the implementation
+   - API changes or new interfaces
+
+Update this documentation:
+- After completing major features
+- Before switching context to different tasks
+- Before creating pull requests
+- At the end of each working session
+```
+
+### QSUMMARY
+
+When I type "qsummary", this means:
+
+```
+Provide a brief summary (3-5 bullet points) of:
+- What we've accomplished so far in this session
+- Current task status
+- Any blockers or issues encountered
+- Next immediate steps
 ```
 
 ### QRF (ReadFlow Specific)

@@ -80,7 +80,7 @@ export default async function Dashboard() {
             Dashboard
           </h1>
           <p className="text-muted-foreground">
-            Monitor your article conversions and manage your ReadFlow account.
+            Monitor your article conversions and manage your Link to Reader account.
           </p>
         </div>
 
