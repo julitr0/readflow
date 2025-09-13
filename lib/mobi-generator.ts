@@ -1,4 +1,5 @@
 import { ConversionMetadata } from "./conversion";
+import { SYSTEM_FONT_STACK, MONOSPACE_FONT_STACK } from "./constants";
 
 export interface MobiFileOptions {
   title: string;
@@ -19,34 +20,44 @@ export class MobiGenerator {
     htmlContent: string,
     metadata: ConversionMetadata,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _options: MobiFileOptions = { title: metadata.title, author: metadata.author }
+    _options: MobiFileOptions = {
+      title: metadata.title,
+      author: metadata.author,
+    },
   ): Promise<{ buffer: Buffer; filename: string; size: number }> {
     try {
-      // Create enhanced HTML with proper e-book structure  
+      // Create enhanced HTML with proper e-book structure
       const epubHtml = this.createEpubHtml(htmlContent, metadata);
-      
+
       // For demo purposes, create an HTML file that can be converted to EPUB
       // In production, you'd use a proper EPUB generation library like Calibre's CLI
-      const htmlBuffer = Buffer.from(epubHtml, 'utf8');
-      
+      const htmlBuffer = Buffer.from(epubHtml, "utf8");
+
       // Create a filename
-      const safeTitle = metadata.title.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50);
+      const safeTitle = metadata.title
+        .replace(/[^a-zA-Z0-9]/g, "_")
+        .substring(0, 50);
       const filename = `${safeTitle}_${Date.now()}.html`;
-      
+
       return {
         buffer: htmlBuffer,
         filename,
         size: htmlBuffer.length,
       };
     } catch (error) {
-      throw new Error(`Failed to generate EPUB file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to generate EPUB file: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
 
   /**
    * Create EPUB-compatible HTML structure
    */
-  private createEpubHtml(htmlContent: string, metadata: ConversionMetadata): string {
+  private createEpubHtml(
+    htmlContent: string,
+    metadata: ConversionMetadata,
+  ): string {
     const epubTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,7 +72,7 @@ export class MobiGenerator {
     <style>
         /* MOBI-optimized styles */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: ${SYSTEM_FONT_STACK};
             line-height: 1.6;
             color: #333;
             max-width: 100%;
@@ -106,7 +117,7 @@ export class MobiGenerator {
             background: #f4f4f4;
             padding: 0.2em 0.4em;
             border-radius: 3px;
-            font-family: 'Courier New', monospace;
+            font-family: ${MONOSPACE_FONT_STACK};
             font-size: 0.9em;
         }
         
@@ -115,7 +126,7 @@ export class MobiGenerator {
             padding: 1em;
             overflow-x: auto;
             border-radius: 5px;
-            font-family: 'Courier New', monospace;
+            font-family: ${MONOSPACE_FONT_STACK};
             font-size: 0.9em;
         }
         
@@ -188,21 +199,22 @@ export class MobiGenerator {
    */
   validateForEpub(content: string): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
+
     if (!content || content.trim().length === 0) {
       errors.push("Content is empty");
     }
-    
-    if (content.length > 5000000) { // 5MB limit for EPUB
+
+    if (content.length > 5000000) {
+      // 5MB limit for EPUB
       errors.push("Content is too large for EPUB conversion");
     }
-    
+
     // Check for minimum content
-    const textContent = content.replace(/<[^>]*>/g, '').trim();
+    const textContent = content.replace(/<[^>]*>/g, "").trim();
     if (textContent.length < 100) {
       errors.push("Content is too short for meaningful EPUB conversion");
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors,
@@ -211,4 +223,4 @@ export class MobiGenerator {
 }
 
 // Export singleton instance
-export const mobiGenerator = new MobiGenerator(); 
+export const mobiGenerator = new MobiGenerator();

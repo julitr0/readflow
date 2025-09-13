@@ -2,136 +2,184 @@
 
 ## Session Summary
 
-Successfully completed the rebranding and deployment of Link to Reader (formerly ReadFlow) to production. The website is now live at https://linktoreader.com with complete branding updates across the entire codebase. Deployed the application to Vercel with proper domain configuration via Cloudflare DNS.
+Successfully completed the rebranding from ReadFlow to Link to Reader and deployed the application to production at linktoreader.com. Configured AWS SES for email handling (both receiving and sending), replacing Mailgun and Gmail SMTP. The website is now live but experiencing OAuth authentication issues that need to be resolved in a future session.
 
 Key accomplishments:
-- Complete rebranding from "ReadFlow" to "Link to Reader" 
-- Production deployment to Vercel with custom domain
-- DNS configuration through Cloudflare
-- Updated all environment variables for production
+- Complete rebranding from "ReadFlow" to "Link to Reader" across entire codebase
+- Successfully deployed to Vercel with custom domain configuration
+- Full AWS SES setup including domain verification, email receiving rules, and SMTP credentials
+- DNS properly configured through Cloudflare
+- Environment variables updated for production
 
 ## Changes Made
 
 ### Files Modified/Created
-- **README.md** - Updated project title and all references
-- **app/layout.tsx** - Updated metadata, OpenGraph, and site information
-- **Homepage components** (hero-section.tsx, header.tsx, footer.tsx, faq.tsx) - Updated branding and contact emails
-- **Dashboard components** (sidebar.tsx, personal-email-card.tsx, kindle-settings-form.tsx) - Updated UI text and email generation
-- **Authentication pages** (sign-in/page.tsx, sign-up/page.tsx) - Updated welcome messages
-- **API routes** - Updated email domain references and comments
-- **Test files** (route.spec.ts files) - Updated test email addresses
-- **Configuration files** (.env.example, ENV_SETUP.md) - Updated email domains and project references
-- **All component files** - Systematic replacement of "ReadFlow" with "Link to Reader"
+- **Rebranding Updates**:
+  - app/layout.tsx - Updated metadata, OpenGraph, and site information
+  - components/homepage/*.tsx - Updated all homepage components with new branding
+  - components/dashboard/*.tsx - Updated dashboard UI and email generation
+  - app/sign-in/page.tsx, app/sign-up/page.tsx - Updated authentication pages
+  - All email references changed from @readflow.com to @linktoreader.com
 
-### Email Domain Changes
-- Changed from `@readflow.com` to `@linktoreader.com`
-- Updated support email to `support@linktoreader.com`
-- Updated SMTP_FROM to `noreply@linktoreader.com`
-- Updated all user-generated email addresses (e.g., `user123@linktoreader.com`)
+- **Authentication Configuration**:
+  - lib/auth.ts - Updated Better Auth configuration with trusted origins
+  - lib/auth-client.ts - Added production URL fallback, temporarily disabled polar plugin
+  - auth-schema.ts - Used for Better Auth with snake_case column names
+  - db/schema.ts - Updated schema to use snake_case columns for Better Auth
+  - auth-drizzle.config.ts - Created for auth table management
+
+- **Configuration Files**:
+  - .env.example - Updated with Link to Reader branding
+  - ENV_SETUP.md - Updated email domains and project references
+  - package.json - Already had linktoreader as name
+
+### AWS SES Configuration
+- **Domain Verification**: linktoreader.com verified with DKIM
+- **Email Receiving**: Configured with S3 bucket storage (ses-rule-set-linktoreader)
+- **SMTP Settings**: Created IAM user with SMTP credentials
+- **Mail FROM Domain**: Configured mail.linktoreader.com with SPF/DKIM
+
+### DNS Configuration (Cloudflare)
+- A record: @ → 76.76.19.164 (Vercel IP)
+- CNAME record: www → cname-china.vercel-dns.com
+- MX record: mail → feedback-smtp.us-east-1.amazonses.com
+- TXT record: mail → "v=spf1 include:amazonses.com ~all"
+- Multiple DKIM CNAME records for SES
+- All records with Cloudflare proxy disabled (DNS only)
 
 ### Dependencies Added or Removed
-- No dependency changes made during this session
+- No new dependencies added
+- Temporarily disabled @polar-sh/better-auth plugin for debugging
 
 ## Technical Decisions
 
-### Rebranding Approach
-- **Why systematic replacement**: Used bulk find-and-replace script to ensure consistency across all files
-- **Domain strategy**: Changed to linktoreader.com for better brand alignment and availability
-- **Email strategy**: Updated all email references to match new domain for future AWS SES integration
+### Rebranding Strategy
+- Used bulk find-and-replace script for consistency
+- Systematic update of all email references to new domain
+- Maintained all existing functionality while updating branding
 
-### Deployment Strategy
-- **Platform choice**: Chose Vercel for Next.js optimization and ease of deployment
-- **Domain configuration**: Used Cloudflare DNS with proxy disabled to allow Vercel SSL management
-- **Environment variables**: Migrated all production secrets to Vercel environment
+### Deployment Approach
+- Chose Vercel for Next.js optimization
+- Disabled Cloudflare proxy to allow Vercel SSL management
+- Configured both apex and www domains
 
-### DNS Configuration Approach
-- **A record**: Points apex domain (@) to Vercel IP (76.76.21.21)
-- **CNAME record**: Points www subdomain to cname.vercel-dns.com
-- **Proxy settings**: Disabled Cloudflare proxy (grey cloud) to allow Vercel SSL handling
+### Email Service Migration
+- Chose AWS SES over Mailgun/SendGrid for cost-effectiveness
+- S3 bucket storage for incoming emails (requires code update to process)
+- SMTP credentials for sending via SES instead of Gmail
+
+### Authentication Issues (Unresolved)
+- Better Auth returning 500 errors initially due to schema mismatch
+- Fixed database column naming (camelCase → snake_case)
+- OAuth still not functioning - possible issues:
+  - Domain redirect from non-www to www causing OAuth mismatch
+  - Better Auth configuration needing further adjustment
+  - Possible SSL certificate provisioning delays
 
 ## Testing & Validation
 
 ### Tests Added or Modified
-- Updated test email addresses in `app/api/email/receive/route.spec.ts`
-- Changed test domains from readflow.com to linktoreader.com
-- All existing tests maintained functionality with new branding
+- Updated test email addresses to use linktoreader.com domain
+- No new tests added during this session
 
 ### Manual Testing Performed
-- ✅ Development server runs successfully with new branding
-- ✅ Website displays "Link to Reader" throughout UI
-- ✅ DNS resolution working correctly (76.76.21.21)
-- ✅ Production site accessible at https://linktoreader.com
-- ✅ Google OAuth redirect URIs updated for production
+- ✅ Website accessible at https://www.linktoreader.com
+- ✅ DNS resolution working correctly
+- ✅ SES domain verified and email receiving configured
+- ❌ Google OAuth authentication not working (500 errors, then redirect issues)
+- ❌ SSL certificate warnings in some browsers
 
 ### Known Edge Cases or Limitations
-- SSL certificate provisioning may take up to 24 hours for full HTTPS access
-- Some network security filters may initially block the new domain
-- Email functionality still relies on Gmail SMTP (to be replaced with AWS SES)
+- OAuth callback URLs need both www and non-www versions
+- Site redirects from non-www to www causing OAuth confusion
+- Email processing code still expects Mailgun webhooks (needs update for S3)
+- Better Auth database schema issues partially resolved but may need more work
 
 ## Next Steps
 
 ### Immediate Follow-up Tasks
-1. **Set up AWS account and Amazon SES** for cost-effective email handling
-2. **Configure SES domain verification** for linktoreader.com
-3. **Replace Mailgun webhook** with AWS SES receiving configuration
-4. **Replace Gmail SMTP** with AWS SES sending configuration
-5. **Update environment variables** to use SES endpoints and credentials
+1. **Fix OAuth Authentication**:
+   - Debug Better Auth 500 errors more thoroughly
+   - Ensure database schema is fully compatible
+   - Test with simplified auth configuration
+
+2. **Update Email Processing Code**:
+   - Replace Mailgun webhook handler with S3 email reader
+   - Implement AWS SDK for reading emails from S3 bucket
+   - Test end-to-end email flow
+
+3. **Resolve Domain/SSL Issues**:
+   - Fix domain redirect configuration in Vercel
+   - Ensure SSL certificates work for both www and non-www
+   - Update all OAuth URLs to match actual domain behavior
 
 ### Future Improvements Identified
-- Implement AWS SES for both inbound and outbound email processing
-- Set up proper email routing and bounce handling
-- Configure SES sandbox removal for production email volumes
-- Add email delivery monitoring and analytics
+- Implement proper email processing from S3 bucket
+- Add monitoring for email delivery success/failure
+- Request SES production access (currently in sandbox)
+- Add email bounce and complaint handling
+- Implement proper error logging for Better Auth
 
-### Technical Debt Introduced (if any)
-- Still using Gmail SMTP for email sending (temporary until AWS SES setup)
-- Mailgun configuration remains in codebase but will be replaced
-- Some build warnings remain but don't affect functionality
+### Technical Debt Introduced
+- auth-drizzle.config.ts is temporary and should be consolidated
+- Polar plugin disabled - needs to be re-enabled when auth works
+- Email processing still using old Mailgun code
+- Mixed schema files (auth-schema.ts vs db/schema.ts)
 
 ## Blockers & Issues
 
 ### Unresolved Problems
-- None - all major objectives completed successfully
+1. **Google OAuth Not Working**:
+   - Better Auth endpoints returning errors
+   - Possible database schema mismatches remain
+   - Domain redirect causing OAuth callback issues
+
+2. **SSL Certificate Warnings**:
+   - Chrome showing certificate errors for non-www domain
+   - Possible Vercel SSL provisioning incomplete
+
+3. **Email Processing Gap**:
+   - Emails going to S3 bucket but not being processed
+   - Application still expects Mailgun webhooks
 
 ### Dependencies on External Factors
-- **AWS account setup**: User needs to create AWS account for SES configuration
-- **SES domain verification**: Requires DNS TXT record configuration in Cloudflare
-- **SES sandbox removal**: May require AWS support request for production volumes
+- SES sandbox limits (verified emails only until production access granted)
+- SSL certificate provisioning may take up to 24 hours
+- Google OAuth changes can take time to propagate
 
 ### Areas Needing Clarification
-- AWS SES pricing tier selection for expected email volume
-- Email retention and logging requirements for compliance
-- Backup email delivery options if SES experiences issues
+- Whether to use www or non-www as primary domain
+- Email retention policy for S3 bucket
+- Monitoring and alerting strategy for failed authentications
 
 ## Code Examples
 
-### Key Implementation - Email Domain Generation
-```typescript
-// Before (ReadFlow)
-const personalEmail = personalEmail || `${userId.slice(0, 8)}@readflow.com`;
-
-// After (Link to Reader) 
-const personalEmail = personalEmail || `${userId.slice(0, 8)}@linktoreader.com`;
-```
-
-### Environment Variable Updates
-```bash
-# Production URLs
-NEXT_PUBLIC_APP_URL=https://linktoreader.com
-NEXT_PUBLIC_BASE_URL=https://linktoreader.com
-BETTER_AUTH_URL=https://linktoreader.com
-
-# Email Configuration (to be updated with SES)
+### Key Implementation - AWS SES SMTP Configuration
+```javascript
+// Updated environment variables for SES
+SMTP_HOST=email-smtp.us-east-1.amazonaws.com
+SMTP_PORT=587
+SMTP_USER=[AWS_SES_SMTP_USERNAME]
+SMTP_PASSWORD=[AWS_SES_SMTP_PASSWORD]
 SMTP_FROM=noreply@linktoreader.com
 ```
 
-### DNS Configuration
+### Better Auth Schema Fix
+```typescript
+// Changed from camelCase to snake_case
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  emailVerified: boolean("email_verified").notNull().default(false), // Changed
+  createdAt: timestamp("created_at").notNull().defaultNow(), // Changed
+  updatedAt: timestamp("updated_at").notNull().defaultNow(), // Changed
+});
 ```
-# Cloudflare DNS Records
-A    @    76.76.21.21           DNS Only (Grey Cloud)
-CNAME www  cname.vercel-dns.com DNS Only (Grey Cloud)
-```
+
+### Next Session Priority
+1. Debug and fix OAuth authentication
+2. Implement S3 email processing to replace Mailgun
+3. Resolve domain/SSL configuration issues
 
 ---
 
-*Session completed successfully. Website is live and ready for AWS SES integration.*
+*Session ended with OAuth issues unresolved. Website is live but authentication not functional. Email infrastructure configured but needs application code updates to process emails from S3.*

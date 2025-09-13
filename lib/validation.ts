@@ -151,6 +151,34 @@ export function validateRequest<T>(
 }
 
 // Helper for validating Mailgun webhook signatures with replay protection
+export function validateAwsSesSignature(
+  request: NextRequest,
+  webhookSecret: string
+): boolean {
+  try {
+    // For AWS SES SNS notifications, validate the signature from headers
+    const messageType = request.headers.get('x-amz-sns-message-type');
+    const messageId = request.headers.get('x-amz-sns-message-id');
+    const topicArn = request.headers.get('x-amz-sns-topic-arn');
+    
+    // Basic validation that this is a proper SNS notification
+    if (!messageType || !messageId || !topicArn) {
+      return false;
+    }
+    
+    // For now, we'll validate based on the webhook secret
+    // In production, you'd want to verify the SNS signature properly
+    const authHeader = request.headers.get('authorization');
+    if (authHeader !== `Bearer ${webhookSecret}`) {
+      return false;
+    }
+    
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function validateMailgunSignature(
   timestamp: string,
   token: string,

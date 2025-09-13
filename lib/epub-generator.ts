@@ -1,4 +1,5 @@
 import { ConversionMetadata } from "./conversion";
+import { SYSTEM_FONT_STACK, MONOSPACE_FONT_STACK } from "./constants";
 import { exec } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs";
@@ -24,48 +25,55 @@ export class EpubGenerator {
   async generateEpubFile(
     htmlContent: string,
     metadata: ConversionMetadata,
-    options: EpubOptions = { title: metadata.title, author: metadata.author }
+    options: EpubOptions = { title: metadata.title, author: metadata.author },
   ): Promise<{ buffer: Buffer; filename: string; size: number }> {
     try {
-      console.log('Starting EPUB generation process...');
-      
+      console.log("Starting EPUB generation process...");
+
       // Create a temporary HTML file
       const tempDir = os.tmpdir();
       const tempHtmlPath = path.join(tempDir, `temp_${Date.now()}.html`);
       const tempEpubPath = path.join(tempDir, `temp_${Date.now()}.epub`);
-      
-      console.log('Temp files:', { tempHtmlPath, tempEpubPath });
-      
+
+      console.log("Temp files:", { tempHtmlPath, tempEpubPath });
+
       // Create enhanced HTML with proper e-book structure
       const epubHtml = this.createEpubHtml(htmlContent, metadata);
-      
+
       // Write HTML to temporary file
-      await fs.promises.writeFile(tempHtmlPath, epubHtml, 'utf8');
-      console.log('HTML file written to temp location');
-      
+      await fs.promises.writeFile(tempHtmlPath, epubHtml, "utf8");
+      console.log("HTML file written to temp location");
+
       // Check if Calibre is installed
-      console.log('Checking Calibre installation...');
+      console.log("Checking Calibre installation...");
       const calibreInstalled = await this.checkCalibreInstallation();
-      console.log('Calibre installed:', calibreInstalled);
-      
+      console.log("Calibre installed:", calibreInstalled);
+
       if (calibreInstalled) {
-        console.log('Using Calibre for EPUB generation');
+        console.log("Using Calibre for EPUB generation");
         // Use Calibre to convert HTML to EPUB
-        await this.convertWithCalibre(tempHtmlPath, tempEpubPath, metadata, options);
-        console.log('Calibre conversion completed');
-        
+        await this.convertWithCalibre(
+          tempHtmlPath,
+          tempEpubPath,
+          metadata,
+          options,
+        );
+        console.log("Calibre conversion completed");
+
         // Read the generated EPUB file
         const epubBuffer = await fs.promises.readFile(tempEpubPath);
-        console.log('EPUB file read, size:', epubBuffer.length);
-        
+        console.log("EPUB file read, size:", epubBuffer.length);
+
         // Clean up temporary files
         await this.cleanupTempFiles([tempHtmlPath, tempEpubPath]);
-        
+
         // Create filename
-        const safeTitle = metadata.title.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50);
+        const safeTitle = metadata.title
+          .replace(/[^a-zA-Z0-9]/g, "_")
+          .substring(0, 50);
         const filename = `${safeTitle}_${Date.now()}.epub`;
-        
-        console.log('EPUB generated successfully:', filename);
+
+        console.log("EPUB generated successfully:", filename);
         return {
           buffer: epubBuffer,
           filename,
@@ -89,11 +97,11 @@ export class EpubGenerator {
    */
   private async checkCalibreInstallation(): Promise<boolean> {
     try {
-      const { stdout } = await execAsync('ebook-convert --version');
-      console.log('Calibre found:', stdout.trim());
+      const { stdout } = await execAsync("ebook-convert --version");
+      console.log("Calibre found:", stdout.trim());
       return true;
     } catch (error) {
-      console.log('Calibre not found:', error);
+      console.log("Calibre not found:", error);
       return false;
     }
   }
@@ -105,45 +113,50 @@ export class EpubGenerator {
     inputPath: string,
     outputPath: string,
     metadata: ConversionMetadata,
-    options: EpubOptions
+    options: EpubOptions,
   ): Promise<void> {
     const calibreArgs = [
       `"${inputPath}"`,
       `"${outputPath}"`,
       `--title="${metadata.title}"`,
       `--authors="${metadata.author}"`,
-      `--language="${options.language || 'en'}"`,
-      `--publisher="${options.publisher || 'Link to Reader'}"`,
-      '--no-chapters-in-toc',
-      '--no-default-epub-cover',
-      '--preserve-cover-aspect-ratio',
-      '--disable-font-rescaling',
-      '--input-encoding=utf-8',
+      `--language="${options.language || "en"}"`,
+      `--publisher="${options.publisher || "Link to Reader"}"`,
+      "--no-chapters-in-toc",
+      "--no-default-epub-cover",
+      "--preserve-cover-aspect-ratio",
+      "--disable-font-rescaling",
+      "--input-encoding=utf-8",
     ];
 
-    const command = `ebook-convert ${calibreArgs.join(' ')}`;
-    console.log('Calibre command:', command);
-    
+    const command = `ebook-convert ${calibreArgs.join(" ")}`;
+    console.log("Calibre command:", command);
+
     try {
-      console.log('Executing Calibre conversion...');
+      console.log("Executing Calibre conversion...");
       const { stdout, stderr } = await execAsync(command);
-      console.log('Calibre stdout:', stdout);
-      console.log('Calibre stderr:', stderr);
-      
-      if (stderr && !stderr.includes('Conversion successful')) {
+      console.log("Calibre stdout:", stdout);
+      console.log("Calibre stderr:", stderr);
+
+      if (stderr && !stderr.includes("Conversion successful")) {
         throw new Error(`Calibre conversion failed: ${stderr}`);
       }
-      console.log('Calibre conversion successful');
+      console.log("Calibre conversion successful");
     } catch (error) {
-      console.error('Calibre conversion error:', error);
-      throw new Error(`Calibre conversion error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Calibre conversion error:", error);
+      throw new Error(
+        `Calibre conversion error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
 
   /**
    * Create EPUB-compatible HTML structure
    */
-  private createEpubHtml(htmlContent: string, metadata: ConversionMetadata): string {
+  private createEpubHtml(
+    htmlContent: string,
+    metadata: ConversionMetadata,
+  ): string {
     const epubTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -158,7 +171,7 @@ export class EpubGenerator {
     <style>
         /* EPUB-optimized styles */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: ${SYSTEM_FONT_STACK};
             line-height: 1.6;
             color: #333;
             max-width: 100%;
@@ -203,7 +216,7 @@ export class EpubGenerator {
             background: #f4f4f4;
             padding: 0.2em 0.4em;
             border-radius: 3px;
-            font-family: 'Courier New', monospace;
+            font-family: ${MONOSPACE_FONT_STACK};
             font-size: 0.9em;
         }
         
@@ -212,7 +225,7 @@ export class EpubGenerator {
             padding: 1em;
             overflow-x: auto;
             border-radius: 5px;
-            font-family: 'Courier New', monospace;
+            font-family: ${MONOSPACE_FONT_STACK};
             font-size: 0.9em;
         }
         
@@ -283,11 +296,16 @@ export class EpubGenerator {
   /**
    * Generate fallback HTML file if Calibre is not available
    */
-  private generateFallbackHtml(htmlContent: string, metadata: ConversionMetadata): { buffer: Buffer; filename: string; size: number } {
-    const htmlBuffer = Buffer.from(htmlContent, 'utf8');
-    const safeTitle = metadata.title.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50);
+  private generateFallbackHtml(
+    htmlContent: string,
+    metadata: ConversionMetadata,
+  ): { buffer: Buffer; filename: string; size: number } {
+    const htmlBuffer = Buffer.from(htmlContent, "utf8");
+    const safeTitle = metadata.title
+      .replace(/[^a-zA-Z0-9]/g, "_")
+      .substring(0, 50);
     const filename = `${safeTitle}_${Date.now()}.html`;
-    
+
     return {
       buffer: htmlBuffer,
       filename,
@@ -309,4 +327,4 @@ export class EpubGenerator {
   }
 }
 
-export const epubGenerator = new EpubGenerator(); 
+export const epubGenerator = new EpubGenerator();

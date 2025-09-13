@@ -1,11 +1,12 @@
-import nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
+import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
+import { SYSTEM_FONT_STACK } from "./constants";
 
 export interface NotificationData {
   userId: string;
   userEmail: string;
   userName?: string;
-  type: 'conversion_failed' | 'usage_limit_warning' | 'usage_limit_reached';
+  type: "conversion_failed" | "usage_limit_warning" | "usage_limit_reached";
   data: Record<string, unknown>;
 }
 
@@ -14,8 +15,8 @@ export class NotificationService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: parseInt(process.env.SMTP_PORT || "587"),
       secure: false,
       auth: {
         user: process.env.SMTP_USER,
@@ -27,26 +28,28 @@ export class NotificationService {
   /**
    * Send conversion failure notification
    */
-  async sendConversionFailureNotification(notification: NotificationData): Promise<void> {
-    if (notification.type !== 'conversion_failed') return;
+  async sendConversionFailureNotification(
+    notification: NotificationData,
+  ): Promise<void> {
+    if (notification.type !== "conversion_failed") return;
 
     const { userEmail, userName, data } = notification;
-    const articleTitle = data.title || 'Unknown Article';
-    const errorMessage = data.error || 'Unknown error occurred';
+    const articleTitle = data.title || "Unknown Article";
+    const errorMessage = data.error || "Unknown error occurred";
 
     try {
       await this.transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to: userEmail,
-        subject: 'Link to Reader: Conversion Failed',
+        subject: "Link to Reader: Conversion Failed",
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="font-family: ${SYSTEM_FONT_STACK}; max-width: 600px; margin: 0 auto;">
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
               <h2 style="color: #dc3545; margin: 0;">Conversion Failed ❌</h2>
             </div>
             
             <div style="padding: 20px 0;">
-              <p>Hi ${userName || 'there'},</p>
+              <p>Hi ${userName || "there"},</p>
               
               <p>We encountered an issue converting your article to EPUB format:</p>
               
@@ -57,10 +60,15 @@ export class NotificationService {
               
               <p><strong>What to do next:</strong></p>
               <ul>
-                <li>Try sharing the article again - sometimes temporary issues resolve themselves</li>
-                <li>Make sure the article content is complete and properly formatted</li>
-                <li>If the issue persists, please reply to this email for support</li>
+                <li><strong>If timeout error:</strong> Try with a shorter article or wait and try again</li>
+                <li><strong>If format error:</strong> Ensure the newsletter has proper text content (not just images)</li>
+                <li><strong>If network error:</strong> Wait a few minutes and forward the email again</li>
+                <li><strong>Still having issues?</strong> Reply to this email for support</li>
               </ul>
+              
+              <p style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 15px 0;">
+                💡 <strong>Tip:</strong> Most conversion issues are resolved by trying again or ensuring the newsletter content is text-based rather than image-heavy.
+              </p>
               
               <p>We apologize for the inconvenience and appreciate your patience.</p>
             </div>
@@ -74,7 +82,7 @@ export class NotificationService {
         text: `
 Link to Reader: Conversion Failed
 
-Hi ${userName || 'there'},
+Hi ${userName || "there"},
 
 We encountered an issue converting your article "${articleTitle}" to EPUB format.
 
@@ -94,7 +102,7 @@ Link to Reader Team
 
       console.log(`Conversion failure notification sent to: ${userEmail}`);
     } catch (error) {
-      console.error('Failed to send conversion failure notification:', error);
+      console.error("Failed to send conversion failure notification:", error);
     }
   }
 
@@ -102,27 +110,27 @@ Link to Reader Team
    * Send usage limit warning notification
    */
   async sendUsageLimitWarning(notification: NotificationData): Promise<void> {
-    if (notification.type !== 'usage_limit_warning') return;
+    if (notification.type !== "usage_limit_warning") return;
 
     const { userEmail, userName, data } = notification;
     const usagePercentage = data.usagePercentage || 0;
     const articlesUsed = data.articlesUsed || 0;
     const articlesLimit = data.articlesLimit || 0;
-    const subscriptionTier = (data.subscriptionTier as string) || 'starter';
+    const subscriptionTier = (data.subscriptionTier as string) || "starter";
 
     try {
       await this.transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to: userEmail,
-        subject: 'Link to Reader: Approaching Monthly Limit',
+        subject: "Link to Reader: Approaching Monthly Limit",
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="font-family: ${SYSTEM_FONT_STACK}; max-width: 600px; margin: 0 auto;">
             <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
               <h2 style="color: #856404; margin: 0;">Approaching Monthly Limit ⚠️</h2>
             </div>
             
             <div style="padding: 20px 0;">
-              <p>Hi ${userName || 'there'},</p>
+              <p>Hi ${userName || "there"},</p>
               
               <p>You're approaching your monthly article conversion limit:</p>
               
@@ -138,7 +146,7 @@ Link to Reader Team
               </ul>
               
               <div style="text-align: center; margin: 20px 0;">
-                <a href="${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/payment" 
+                <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/payment" 
                    style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
                   Upgrade Now
                 </a>
@@ -153,7 +161,7 @@ Link to Reader Team
         text: `
 Link to Reader: Approaching Monthly Limit
 
-Hi ${userName || 'there'},
+Hi ${userName || "there"},
 
 You're approaching your monthly article conversion limit:
 - Usage: ${articlesUsed} of ${articlesLimit} articles (${usagePercentage}%)
@@ -163,7 +171,7 @@ To continue converting articles this month, consider upgrading to Pro:
 - 300 articles/month for $7/month
 - Better value with more articles per dollar
 
-Upgrade at: ${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/payment
+Upgrade at: ${process.env.NEXT_PUBLIC_APP_URL}/dashboard/payment
 
 Best regards,
 Link to Reader Team
@@ -172,7 +180,7 @@ Link to Reader Team
 
       console.log(`Usage warning notification sent to: ${userEmail}`);
     } catch (error) {
-      console.error('Failed to send usage warning notification:', error);
+      console.error("Failed to send usage warning notification:", error);
     }
   }
 
@@ -180,26 +188,26 @@ Link to Reader Team
    * Send usage limit reached notification
    */
   async sendUsageLimitReached(notification: NotificationData): Promise<void> {
-    if (notification.type !== 'usage_limit_reached') return;
+    if (notification.type !== "usage_limit_reached") return;
 
     const { userEmail, userName, data } = notification;
     const articlesLimit = data.articlesLimit || 0;
     const daysUntilReset = data.daysUntilReset || 0;
-    const subscriptionTier = (data.subscriptionTier as string) || 'starter';
+    const subscriptionTier = (data.subscriptionTier as string) || "starter";
 
     try {
       await this.transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to: userEmail,
-        subject: 'Link to Reader: Monthly Limit Reached',
+        subject: "Link to Reader: Monthly Limit Reached",
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="font-family: ${SYSTEM_FONT_STACK}; max-width: 600px; margin: 0 auto;">
             <div style="background: #f8d7da; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
               <h2 style="color: #721c24; margin: 0;">Monthly Limit Reached 🚫</h2>
             </div>
             
             <div style="padding: 20px 0;">
-              <p>Hi ${userName || 'there'},</p>
+              <p>Hi ${userName || "there"},</p>
               
               <p>You've reached your monthly limit of ${articlesLimit} article conversions.</p>
               
@@ -215,7 +223,7 @@ Link to Reader Team
               </ul>
               
               <div style="text-align: center; margin: 20px 0;">
-                <a href="${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/payment" 
+                <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/payment" 
                    style="background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
                   Upgrade to Pro
                 </a>
@@ -232,7 +240,7 @@ Link to Reader Team
         text: `
 Link to Reader: Monthly Limit Reached
 
-Hi ${userName || 'there'},
+Hi ${userName || "there"},
 
 You've reached your monthly limit of ${articlesLimit} article conversions.
 
@@ -243,7 +251,7 @@ Options to continue reading:
 - Upgrade to Pro: Get 300 articles/month immediately  
 - Wait for reset: Your limit resets in ${daysUntilReset} days
 
-Upgrade at: ${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/payment
+Upgrade at: ${process.env.NEXT_PUBLIC_APP_URL}/dashboard/payment
 
 Thank you for being a Link to Reader user!
 
@@ -254,7 +262,7 @@ Link to Reader Team
 
       console.log(`Usage limit reached notification sent to: ${userEmail}`);
     } catch (error) {
-      console.error('Failed to send usage limit notification:', error);
+      console.error("Failed to send usage limit notification:", error);
     }
   }
 
@@ -263,13 +271,13 @@ Link to Reader Team
    */
   async sendNotification(notification: NotificationData): Promise<void> {
     switch (notification.type) {
-      case 'conversion_failed':
+      case "conversion_failed":
         await this.sendConversionFailureNotification(notification);
         break;
-      case 'usage_limit_warning':
+      case "usage_limit_warning":
         await this.sendUsageLimitWarning(notification);
         break;
-      case 'usage_limit_reached':
+      case "usage_limit_reached":
         await this.sendUsageLimitReached(notification);
         break;
       default:
@@ -285,7 +293,7 @@ Link to Reader Team
       await this.transporter.verify();
       return true;
     } catch (error) {
-      console.error('Email service connection test failed:', error);
+      console.error("Email service connection test failed:", error);
       return false;
     }
   }

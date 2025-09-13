@@ -38,7 +38,7 @@ describe('KindleDeliveryService', () => {
       expect(result.success).toBe(true);
       expect(result.messageId).toBe('test-message-id');
       expect(mockTransporter.sendMail).toHaveBeenCalledWith({
-        from: process.env.SMTP_USER,
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to: 'test@kindle.com',
         subject: 'Link to Reader: Test Article',
         text: expect.stringContaining('Test Article'),

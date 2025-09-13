@@ -1,8 +1,9 @@
-import { JSDOM } from 'jsdom';
-import { spawn } from 'child_process';
-import fs from 'fs/promises';
-import path from 'path';
-import os from 'os';
+import { JSDOM } from "jsdom";
+import { SYSTEM_FONT_STACK, MONOSPACE_FONT_STACK } from "./constants";
+import { spawn } from "child_process";
+import fs from "fs/promises";
+import path from "path";
+import os from "os";
 
 export interface ConversionMetadata {
   title: string;
@@ -44,51 +45,83 @@ export class ContentConverter {
   async convertHtmlToKindle(
     htmlContent: string,
     metadata: ConversionMetadata,
-    options: ConversionOptions = {}
+    options: ConversionOptions = {},
+  ): Promise<ConversionResult> {
+    // RF-14: Email processing must complete within 5 minutes
+    const PROCESSING_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+    return Promise.race([
+      this.performConversion(htmlContent, metadata, options),
+      new Promise<ConversionResult>((_, reject) =>
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                "Processing timeout: Conversion exceeded 5 minute limit",
+              ),
+            ),
+          PROCESSING_TIMEOUT,
+        ),
+      ),
+    ]);
+  }
+
+  private async performConversion(
+    htmlContent: string,
+    metadata: ConversionMetadata,
+    options: ConversionOptions = {},
   ): Promise<ConversionResult> {
     let tempDir: string | null = null;
-    
+
     try {
       const mergedOptions = { ...this.defaultOptions, ...options };
-      
+
       // Create temporary directory
-      tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'readflow-'));
-      
+      tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "readflow-"));
+
       // Parse HTML content
       const dom = new JSDOM(htmlContent);
       const document = dom.window.document;
-      
+
       // Clean and optimize HTML
       const cleanedHtml = await this.cleanHtml(document, mergedOptions);
-      
+
       // Process images
       const processedHtml = await this.processImages(cleanedHtml);
-      
+
       // Generate Kindle-compatible format
       const kindleContent = this.generateKindleFormat(processedHtml, metadata);
-      
+
       // Write HTML to temporary file
-      const htmlPath = path.join(tempDir, 'content.html');
-      await fs.writeFile(htmlPath, kindleContent, 'utf8');
-      
+      const htmlPath = path.join(tempDir, "content.html");
+      await fs.writeFile(htmlPath, kindleContent, "utf8");
+
       // Convert to EPUB using Calibre
-      const epubPath = path.join(tempDir, `${this.sanitizeFileName(metadata.title)}.epub`);
+      const epubPath = path.join(
+        tempDir,
+        `${this.sanitizeFileName(metadata.title)}.epub`,
+      );
       const calibreResult = await this.runCalibre(htmlPath, epubPath, metadata);
-      
+
       if (!calibreResult.success) {
-        throw new Error(calibreResult.error || 'Calibre conversion failed');
+        throw new Error(calibreResult.error || "Calibre conversion failed");
       }
-      
+
       // Read EPUB file and get size
       const epubBuffer = await fs.readFile(epubPath);
       const fileSize = epubBuffer.length;
-      
+
       // In production, upload to cloud storage (R2/S3)
       // For now, we'll use a local path
-      const finalPath = path.join(process.cwd(), 'storage', 'conversions', path.basename(epubPath));
+      const finalPath = path.join(
+        process.cwd(),
+        "storage",
+        "conversions",
+        path.basename(epubPath),
+      );
       await fs.mkdir(path.dirname(finalPath), { recursive: true });
       await fs.copyFile(epubPath, finalPath);
-      
+
       return {
         success: true,
         fileUrl: finalPath,
@@ -96,9 +129,25 @@ export class ContentConverter {
         fileSize,
       };
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Conversion failed";
+
+      // Provide actionable error messages
+      let userFriendlyMessage = errorMessage;
+      if (errorMessage.includes("timeout")) {
+        userFriendlyMessage =
+          "Conversion took too long. Try with a shorter article or contact support if this persists.";
+      } else if (errorMessage.includes("Calibre")) {
+        userFriendlyMessage =
+          "Unable to convert article format. Please ensure the content is properly formatted.";
+      } else if (errorMessage.includes("file")) {
+        userFriendlyMessage =
+          "File processing error. Please try again or contact support.";
+      }
+
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Conversion failed',
+        error: userFriendlyMessage,
       };
     } finally {
       // Clean up temporary directory
@@ -106,7 +155,7 @@ export class ContentConverter {
         try {
           await fs.rm(tempDir, { recursive: true, force: true });
         } catch (error) {
-          console.warn('Failed to clean up temp directory:', error);
+          console.warn("Failed to clean up temp directory:", error);
         }
       }
     }
@@ -115,16 +164,26 @@ export class ContentConverter {
   /**
    * Clean and optimize HTML content
    */
-  private async cleanHtml(document: Document, options: ConversionOptions): Promise<string> {
+  private async cleanHtml(
+    document: Document,
+    options: ConversionOptions,
+  ): Promise<string> {
     // Remove unwanted elements
     const elementsToRemove = [
-      'script', 'style', 'iframe', 'object', 'embed',
-      '.advertisement', '.ads', '.social-share', '.comments'
+      "script",
+      "style",
+      "iframe",
+      "object",
+      "embed",
+      ".advertisement",
+      ".ads",
+      ".social-share",
+      ".comments",
     ];
-    
-    elementsToRemove.forEach(selector => {
+
+    elementsToRemove.forEach((selector) => {
       const elements = document.querySelectorAll(selector);
-      elements.forEach(el => el.remove());
+      elements.forEach((el) => el.remove());
     });
 
     // Clean up formatting
@@ -144,20 +203,20 @@ export class ContentConverter {
   private async processImages(html: string): Promise<string> {
     const dom = new JSDOM(html);
     const document = dom.window.document;
-    const images = document.querySelectorAll('img');
+    const images = document.querySelectorAll("img");
 
     for (const img of Array.from(images)) {
-      const src = img.getAttribute('src');
+      const src = img.getAttribute("src");
       if (!src) continue;
 
       try {
         // Process image (in real implementation, download and optimize)
         const optimizedSrc = await this.optimizeImage(src);
-        img.setAttribute('src', optimizedSrc);
-        
+        img.setAttribute("src", optimizedSrc);
+
         // Add Kindle-friendly attributes
-        img.setAttribute('style', 'max-width: 100%; height: auto;');
-        img.setAttribute('alt', img.getAttribute('alt') || 'Image');
+        img.setAttribute("style", "max-width: 100%; height: auto;");
+        img.setAttribute("alt", img.getAttribute("alt") || "Image");
       } catch (error) {
         console.warn(`Failed to process image: ${src}`, error);
         // Remove problematic images
@@ -188,21 +247,21 @@ export class ContentConverter {
    */
   private preserveFormatting(document: Document): void {
     // Ensure headings are properly structured
-    const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
-    headings.forEach(heading => {
-      heading.setAttribute('style', 'margin: 1em 0; font-weight: bold;');
+    const headings = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+    headings.forEach((heading) => {
+      heading.setAttribute("style", "margin: 1em 0; font-weight: bold;");
     });
 
     // Preserve paragraph spacing
-    const paragraphs = document.querySelectorAll('p');
-    paragraphs.forEach(p => {
-      p.setAttribute('style', 'margin: 0.5em 0; line-height: 1.6;');
+    const paragraphs = document.querySelectorAll("p");
+    paragraphs.forEach((p) => {
+      p.setAttribute("style", "margin: 0.5em 0; line-height: 1.6;");
     });
 
     // Preserve lists
-    const lists = document.querySelectorAll('ul, ol');
-    lists.forEach(list => {
-      list.setAttribute('style', 'margin: 0.5em 0; padding-left: 1.5em;');
+    const lists = document.querySelectorAll("ul, ol");
+    lists.forEach((list) => {
+      list.setAttribute("style", "margin: 0.5em 0; padding-left: 1.5em;");
     });
   }
 
@@ -211,10 +270,10 @@ export class ContentConverter {
    */
   private optimizeForKindle(document: Document): void {
     // Add Kindle-specific CSS
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: ${SYSTEM_FONT_STACK};
         line-height: 1.6;
         color: #333;
         max-width: 100%;
@@ -252,7 +311,7 @@ export class ContentConverter {
         background: #f4f4f4;
         padding: 0.2em 0.4em;
         border-radius: 3px;
-        font-family: 'Courier New', monospace;
+        font-family: ${MONOSPACE_FONT_STACK};
       }
       
       pre {
@@ -262,14 +321,17 @@ export class ContentConverter {
         border-radius: 5px;
       }
     `;
-    
+
     document.head.appendChild(style);
   }
 
   /**
    * Generate Kindle-compatible format
    */
-  private generateKindleFormat(html: string, metadata: ConversionMetadata): string {
+  private generateKindleFormat(
+    html: string,
+    metadata: ConversionMetadata,
+  ): string {
     const kindleTemplate = `
 <!DOCTYPE html>
 <html lang="en">
@@ -315,33 +377,37 @@ export class ContentConverter {
   extractMetadata(htmlContent: string): ConversionMetadata {
     const dom = new JSDOM(htmlContent);
     const document = dom.window.document;
-    
+
     // Extract title
-    const title = document.querySelector('title')?.textContent || 
-                  document.querySelector('h1')?.textContent || 
-                  'Untitled Article';
-    
+    const title =
+      document.querySelector("title")?.textContent ||
+      document.querySelector("h1")?.textContent ||
+      "Untitled Article";
+
     // Extract author
-    const author = document.querySelector('meta[name="author"]')?.getAttribute('content') ||
-                   document.querySelector('.author')?.textContent ||
-                   'Unknown Author';
-    
+    const author =
+      document.querySelector('meta[name="author"]')?.getAttribute("content") ||
+      document.querySelector(".author")?.textContent ||
+      "Unknown Author";
+
     // Extract date
-    const date = document.querySelector('meta[name="date"]')?.getAttribute('content') ||
-                 document.querySelector('time')?.getAttribute('datetime') ||
-                 new Date().toISOString();
-    
+    const date =
+      document.querySelector('meta[name="date"]')?.getAttribute("content") ||
+      document.querySelector("time")?.getAttribute("datetime") ||
+      new Date().toISOString();
+
     // Extract source (from URL or meta tag)
-    const source = document.querySelector('meta[name="source"]')?.getAttribute('content') ||
-                   'Unknown Source';
-    
+    const source =
+      document.querySelector('meta[name="source"]')?.getAttribute("content") ||
+      "Unknown Source";
+
     // Calculate word count
-    const textContent = document.body?.textContent || '';
+    const textContent = document.body?.textContent || "";
     const wordCount = textContent.trim().split(/\s+/).length;
-    
+
     // Calculate reading time (average 200 words per minute)
     const readingTime = Math.ceil(wordCount / 200);
-    
+
     return {
       title: title.trim(),
       author: author.trim(),
@@ -358,54 +424,61 @@ export class ContentConverter {
   private async runCalibre(
     inputPath: string,
     outputPath: string,
-    metadata: ConversionMetadata
+    metadata: ConversionMetadata,
   ): Promise<{ success: boolean; error?: string }> {
     return new Promise((resolve) => {
       const args = [
         inputPath,
         outputPath,
-        '--title', metadata.title,
-        '--authors', metadata.author,
-        '--pubdate', metadata.date,
-        '--publisher', 'Link to Reader',
-        '--language', 'en',
-        '--epub-version', '3',
-        '--pretty-print',
-        '--insert-metadata',
-        '--cover', this.getDefaultCoverPath(),
+        "--title",
+        metadata.title,
+        "--authors",
+        metadata.author,
+        "--pubdate",
+        metadata.date,
+        "--publisher",
+        "Link to Reader",
+        "--language",
+        "en",
+        "--epub-version",
+        "3",
+        "--pretty-print",
+        "--insert-metadata",
+        "--cover",
+        this.getDefaultCoverPath(),
       ];
 
-      const calibre = spawn('ebook-convert', args, {
-        stdio: ['pipe', 'pipe', 'pipe'],
+      const calibre = spawn("ebook-convert", args, {
+        stdio: ["pipe", "pipe", "pipe"],
       });
 
       // let _stdout = '';
-      let stderr = '';
+      let stderr = "";
 
-      calibre.stdout?.on('data', () => {
+      calibre.stdout?.on("data", () => {
         // stdout data handling removed for now
       });
 
-      calibre.stderr?.on('data', (data) => {
+      calibre.stderr?.on("data", (data) => {
         stderr += data.toString();
       });
 
-      calibre.on('close', (code) => {
+      calibre.on("close", (code) => {
         if (code === 0) {
           resolve({ success: true });
         } else {
-          console.error('Calibre error:', stderr);
-          resolve({ 
-            success: false, 
-            error: `Calibre conversion failed with code ${code}: ${stderr}` 
+          console.error("Calibre error:", stderr);
+          resolve({
+            success: false,
+            error: `Calibre conversion failed with code ${code}: ${stderr}`,
           });
         }
       });
 
-      calibre.on('error', (error) => {
-        resolve({ 
-          success: false, 
-          error: `Failed to start Calibre: ${error.message}` 
+      calibre.on("error", (error) => {
+        resolve({
+          success: false,
+          error: `Failed to start Calibre: ${error.message}`,
         });
       });
     });
@@ -416,7 +489,7 @@ export class ContentConverter {
    */
   private getDefaultCoverPath(): string {
     // Return path to default cover image, or empty string if not available
-    const coverPath = path.join(process.cwd(), 'public', 'default-cover.jpg');
+    const coverPath = path.join(process.cwd(), "public", "default-cover.jpg");
     return coverPath;
   }
 
@@ -425,8 +498,8 @@ export class ContentConverter {
    */
   public sanitizeFileName(title: string): string {
     return title
-      .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters
-      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/[^a-zA-Z0-9\s\-_]/g, "") // Remove special characters
+      .replace(/\s+/g, "_") // Replace spaces with underscores
       .slice(0, 50) // Limit length
       .trim();
   }
@@ -436,24 +509,25 @@ export class ContentConverter {
    */
   validateContent(htmlContent: string): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
+
     if (!htmlContent || htmlContent.trim().length === 0) {
-      errors.push('Content is empty');
+      errors.push("Content is empty");
     }
-    
-    if (htmlContent.length > 1000000) { // 1MB limit
-      errors.push('Content is too large');
+
+    if (htmlContent.length > 1000000) {
+      // 1MB limit
+      errors.push("Content is too large");
     }
-    
+
     const dom = new JSDOM(htmlContent);
     const document = dom.window.document;
-    
+
     // Check for minimum content
-    const textContent = document.body?.textContent || '';
+    const textContent = document.body?.textContent || "";
     if (textContent.trim().split(/\s+/).length < 10) {
-      errors.push('Content is too short (minimum 10 words)');
+      errors.push("Content is too short (minimum 10 words)");
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors,
@@ -462,4 +536,4 @@ export class ContentConverter {
 }
 
 // Export singleton instance
-export const contentConverter = new ContentConverter(); 
+export const contentConverter = new ContentConverter();

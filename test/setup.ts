@@ -4,7 +4,7 @@ import { beforeAll, vi } from 'vitest';
 // Mock environment variables
 beforeAll(() => {
   process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
-  process.env.MAILGUN_SIGNING_KEY = 'test-signing-key';
+  process.env.MAILGUN_WEBHOOK_SIGNING_KEY = 'test-signing-key';
   process.env.SMTP_HOST = 'smtp.test.com';
   process.env.SMTP_USER = 'test@test.com';
   process.env.SMTP_PASSWORD = 'test-password';

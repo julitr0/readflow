@@ -1,6 +1,10 @@
-import nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
-import fs from 'fs/promises';
+import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
+import { SYSTEM_FONT_STACK } from "./constants";
+import { db } from "@/db/drizzle";
+import { conversion } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import fs from "fs/promises";
 
 export interface DeliveryResult {
   success: boolean;
@@ -13,8 +17,8 @@ export class KindleDeliveryService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: parseInt(process.env.SMTP_PORT || "587"),
       secure: false,
       auth: {
         user: process.env.SMTP_USER,
@@ -29,7 +33,33 @@ export class KindleDeliveryService {
   async sendToKindle(
     filePath: string,
     kindleEmail: string,
-    title: string
+    title: string,
+    conversionId?: string,
+  ): Promise<DeliveryResult> {
+    // RF-15: Kindle delivery must complete within 10 minutes
+    const DELIVERY_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+
+    return Promise.race([
+      this.performDelivery(filePath, kindleEmail, title, conversionId),
+      new Promise<DeliveryResult>((_, reject) =>
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                "Delivery timeout: Email delivery exceeded 10 minute limit",
+              ),
+            ),
+          DELIVERY_TIMEOUT,
+        ),
+      ),
+    ]);
+  }
+
+  private async performDelivery(
+    filePath: string,
+    kindleEmail: string,
+    title: string,
+    conversionId?: string,
   ): Promise<DeliveryResult> {
     const maxAttempts = 3;
 
@@ -46,7 +76,7 @@ export class KindleDeliveryService {
           subject: `Link to Reader: ${title}`,
           text: `Your article "${title}" has been converted and is ready to read on your Kindle.\n\nEnjoy distraction-free reading!\n\n-- Link to Reader`,
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+            <div style="font-family: ${SYSTEM_FONT_STACK}; max-width: 600px;">
               <h2>Your article is ready! 📚</h2>
               <p>We've converted "<strong>${title}</strong>" and it's attached to this email.</p>
               <p>The file will automatically appear in your Kindle library shortly.</p>
@@ -61,37 +91,71 @@ export class KindleDeliveryService {
             {
               filename: fileName,
               content: fileBuffer,
-              contentType: 'application/epub+zip',
+              contentType: "application/epub+zip",
             },
           ],
         });
 
         console.log(`Kindle delivery successful: ${result.messageId}`);
+
+        // Update delivery status in database
+        if (conversionId) {
+          try {
+            await db
+              .update(conversion)
+              .set({
+                deliveredAt: new Date(),
+                status: "completed",
+              })
+              .where(eq(conversion.id, conversionId));
+            console.log(
+              `Delivery status updated for conversion: ${conversionId}`,
+            );
+          } catch (dbError) {
+            console.warn("Failed to update delivery status:", dbError);
+            // Don't fail the delivery for a DB update error
+          }
+        }
+
         return {
           success: true,
           messageId: result.messageId,
         };
-
       } catch (error) {
         console.error(`Kindle delivery attempt ${attempt} failed:`, error);
 
         if (attempt === maxAttempts) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Delivery failed";
+          let userFriendlyMessage = errorMessage;
+
+          if (errorMessage.includes("timeout")) {
+            userFriendlyMessage =
+              "Email delivery took too long. Please check your Kindle email address and try again.";
+          } else if (errorMessage.includes("authentication")) {
+            userFriendlyMessage =
+              "Email authentication failed. Please contact support.";
+          } else if (errorMessage.includes("Network")) {
+            userFriendlyMessage =
+              "Network error occurred. Please try again in a few minutes.";
+          }
+
           return {
             success: false,
-            error: error instanceof Error ? error.message : 'Delivery failed',
+            error: userFriendlyMessage,
           };
         }
 
         // Exponential backoff
-        await new Promise(resolve => 
-          setTimeout(resolve, Math.pow(2, attempt) * 1000)
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, attempt) * 1000),
         );
       }
     }
 
     return {
       success: false,
-      error: 'Max delivery attempts exceeded',
+      error: "Max delivery attempts exceeded",
     };
   }
 
@@ -108,8 +172,8 @@ export class KindleDeliveryService {
    */
   private sanitizeFileName(title: string): string {
     return title
-      .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters
-      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/[^a-zA-Z0-9\s\-_]/g, "") // Remove special characters
+      .replace(/\s+/g, "_") // Replace spaces with underscores
       .slice(0, 50) // Limit length
       .trim();
   }
@@ -122,7 +186,7 @@ export class KindleDeliveryService {
       await this.transporter.verify();
       return true;
     } catch (error) {
-      console.error('SMTP connection test failed:', error);
+      console.error("SMTP connection test failed:", error);
       return false;
     }
   }
@@ -135,7 +199,13 @@ export const kindleDelivery = new KindleDeliveryService();
 export async function sendToKindle(
   filePath: string,
   kindleEmail: string,
-  title: string
+  title: string,
+  conversionId?: string,
 ): Promise<DeliveryResult> {
-  return kindleDelivery.sendToKindle(filePath, kindleEmail, title);
+  return kindleDelivery.sendToKindle(
+    filePath,
+    kindleEmail,
+    title,
+    conversionId,
+  );
 }
