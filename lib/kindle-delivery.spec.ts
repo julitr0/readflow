@@ -128,11 +128,16 @@ describe('KindleDeliveryService', () => {
       expect(service.validateKindleEmail('user@kindle.com')).toBe(true);
       expect(service.validateKindleEmail('test123@kindle.com')).toBe(true);
       expect(service.validateKindleEmail('user.name@kindle.com')).toBe(true);
+      // International domains
+      expect(service.validateKindleEmail('user@kindle.co.uk')).toBe(true);
+      expect(service.validateKindleEmail('user@kindle.de')).toBe(true);
+      expect(service.validateKindleEmail('user@kindle.fr')).toBe(true);
+      expect(service.validateKindleEmail('user@kindle.co.jp')).toBe(true);
     });
 
     it('should reject invalid Kindle emails', () => {
       expect(service.validateKindleEmail('user@gmail.com')).toBe(false);
-      expect(service.validateKindleEmail('user@kindle.co.uk')).toBe(false);
+      expect(service.validateKindleEmail('user@kindle.org')).toBe(false);
       expect(service.validateKindleEmail('invalid-email')).toBe(false);
       expect(service.validateKindleEmail('')).toBe(false);
     });

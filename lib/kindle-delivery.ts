@@ -163,7 +163,8 @@ export class KindleDeliveryService {
    * Validate Kindle email address format
    */
   validateKindleEmail(email: string): boolean {
-    const kindleEmailRegex = /^[a-zA-Z0-9._%+-]+@kindle\.com$/;
+    // Support international Kindle domains
+    const kindleEmailRegex = /^[a-zA-Z0-9._%+-]+@kindle\.(com|co\.uk|de|fr|co\.jp|it|es|ca|com\.au|com\.br|in|com\.mx)$/;
     return kindleEmailRegex.test(email);
   }
 
