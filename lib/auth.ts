@@ -12,15 +12,16 @@ export const auth = betterAuth({
     "https://linktoreader.com",
     "https://www.linktoreader.com"
   ],
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema: {
-      user,
-      session,
-      account,
-      verification,
-    },
-  }),
+  // Temporarily remove database adapter to test if OAuth flow works
+  // database: drizzleAdapter(db, {
+  //   provider: "pg",
+  //   schema: {
+  //     user,
+  //     session,
+  //     account,
+  //     verification,
+  //   },
+  // }),
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
