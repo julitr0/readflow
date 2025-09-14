@@ -30,9 +30,16 @@ export async function POST(request: NextRequest) {
     const { kindleEmail, personalEmail, onboardingComplete } = settings;
     // Note: notificationsEnabled and autoDelivery would be used in full implementation
 
-    // Generate personal email based on Kindle email username
+    // Generate user-friendly personal email based on Kindle email username
     let finalPersonalEmail = personalEmail;
-    if (!finalPersonalEmail && kindleEmail) {
+    
+    // Check if we need to regenerate the personal email
+    const shouldRegenerateEmail = !finalPersonalEmail || 
+      (finalPersonalEmail.includes('@linktoreader.com') && 
+       finalPersonalEmail.split('@')[0].length >= 8 && 
+       /^[a-zA-Z0-9]{8,}@linktoreader\.com$/.test(finalPersonalEmail));
+    
+    if (shouldRegenerateEmail && kindleEmail) {
       // Extract username from Kindle email (e.g., jctiusanen@kindle.com -> jctiusanen)
       const kindleUsername = kindleEmail.split('@')[0];
       finalPersonalEmail = `${kindleUsername}@linktoreader.com`;
