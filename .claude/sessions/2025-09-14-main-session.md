@@ -109,6 +109,34 @@ Built a hybrid architecture that leverages Next.js API routes to receive SNS not
 - **Security Setup:** IAM permissions granted for S3 access
 - **Monitoring Ready:** Comprehensive logging for production debugging
 
+## Security Improvement Recommendations
+
+### Future: Migrate AWS Access Keys to IAM Roles
+**Priority**: Medium-High (Security Enhancement)
+**Effort**: 1-2 hours
+
+**Current State**: Using AWS access keys (long-lived credentials) for S3 email processing
+**Recommended**: Migrate to IAM roles for improved security
+
+**Benefits**:
+- ✅ Temporary credentials that auto-rotate
+- ✅ No long-lived secrets to manage  
+- ✅ Reduced risk of credential compromise
+- ✅ Better AWS security best practices compliance
+
+**Implementation Steps**:
+1. Create IAM role with S3/SES permissions
+2. Configure Vercel to assume AWS role (using OIDC/federation)
+3. Update S3Client configuration to use role-based auth
+4. Test email pipeline with role-based credentials
+5. Delete old access keys
+
+**Resources**:
+- [Vercel AWS IAM Role Integration](https://vercel.com/guides/aws-iam-roles)
+- [AWS IAM Roles for Cross-Account Access](https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_cross-account-with-roles.html)
+
+**Note**: This was identified during September 14, 2025 session while debugging AWS signature issues.
+
 ## Next Steps
 
 ### Immediate Follow-up Tasks

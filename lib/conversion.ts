@@ -523,8 +523,11 @@ export class ContentConverter {
     const document = dom.window.document;
 
     // Check for minimum content
+    // NOTE: Disabled for emails with links - content will be fetched from links
     const textContent = document.body?.textContent || "";
-    if (textContent.trim().split(/\s+/).length < 10) {
+    // Skip validation for emails that might contain just links
+    const hasLinks = htmlContent.includes('http://') || htmlContent.includes('https://');
+    if (!hasLinks && textContent.trim().split(/\s+/).length < 10) {
       errors.push("Content is too short (minimum 10 words)");
     }
 
