@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     // Handle notification messages
     if (snsMessage.Type === "Notification") {
       // Parse the event from the SNS message
-      let event: any;
+      let event: Record<string, unknown>;
 
       try {
         event = JSON.parse(snsMessage.Message);
@@ -125,11 +125,18 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if this is an S3 event notification
-      if (event.Records && event.Records[0]?.s3) {
+      const records = event.Records as Array<{
+        s3?: {
+          bucket: { name: string };
+          object: { key: string };
+        };
+      }>;
+      
+      if (records && records[0]?.s3) {
         console.log("S3 event notification received");
         
         // Extract S3 location from S3 event
-        const s3Record = event.Records[0].s3;
+        const s3Record = records[0].s3;
         const s3Location = {
           bucket: s3Record.bucket.name,
           key: s3Record.object.key,
