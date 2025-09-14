@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
+import { Pool } from "pg";
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "https://www.linktoreader.com",
@@ -9,11 +10,10 @@ export const auth = betterAuth({
     "https://linktoreader.com",
     "https://www.linktoreader.com"
   ],
-  // Use simple database URL instead of Drizzle adapter to avoid Neon compatibility issues
-  database: {
+  // Use PostgreSQL Pool for proper database connection
+  database: new Pool({
     connectionString: process.env.DATABASE_URL!,
-    type: "postgres",
-  },
+  }),
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
