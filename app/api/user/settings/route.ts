@@ -34,15 +34,18 @@ export async function POST(request: NextRequest) {
     let finalPersonalEmail = personalEmail;
     
     // Check if we need to regenerate the personal email
+    // Look for random alphanumeric patterns, broken emails, or readflow.com domains
     const shouldRegenerateEmail = !finalPersonalEmail || 
+      finalPersonalEmail.includes('readflow.com') ||  // Old domain
+      !finalPersonalEmail.includes('@') ||  // Broken email format
       (finalPersonalEmail.includes('@linktoreader.com') && 
-       finalPersonalEmail.split('@')[0].length >= 8 && 
-       /^[a-zA-Z0-9]{8,}@linktoreader\.com$/.test(finalPersonalEmail));
+       /^[a-zA-Z0-9]{8,}@linktoreader\.com$/.test(finalPersonalEmail));  // Random alphanumeric
     
-    if (shouldRegenerateEmail && kindleEmail) {
+    if (kindleEmail && shouldRegenerateEmail) {
       // Extract username from Kindle email (e.g., jctiusanen@kindle.com -> jctiusanen)
       const kindleUsername = kindleEmail.split('@')[0];
       finalPersonalEmail = `${kindleUsername}@linktoreader.com`;
+      console.log(`Regenerating personal email from ${personalEmail} to ${finalPersonalEmail}`);
     } else if (!finalPersonalEmail) {
       // Fallback to userId if no Kindle email provided
       finalPersonalEmail = `${userId.slice(0, 8)}@linktoreader.com`;
