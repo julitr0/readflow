@@ -36,7 +36,7 @@ Date: Mon, 14 Sep 2025 10:00:00 GMT
 
     // Mock S3 client
     mockS3Send = vi.fn();
-    (S3Client as any).mockImplementation(() => ({
+    (S3Client as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       send: mockS3Send,
     }));
 
@@ -47,7 +47,7 @@ Date: Mon, 14 Sep 2025 10:00:00 GMT
     it("should fetch and parse email from S3 successfully", async () => {
       // Mock S3 response
       const mockStream = {
-        on: vi.fn((event: string, callback: Function) => {
+        on: vi.fn((event: string, callback: (data?: Buffer) => void) => {
           if (event === "data") {
             callback(mockEmailBuffer);
           } else if (event === "end") {
@@ -62,7 +62,7 @@ Date: Mon, 14 Sep 2025 10:00:00 GMT
       });
 
       // Mock mailparser
-      (simpleParser as any).mockResolvedValue({
+      (simpleParser as ReturnType<typeof vi.fn>).mockResolvedValue({
         from: { text: "sender@example.com" },
         to: { text: "user123@linktoreader.com" },
         subject: "Test Newsletter",
@@ -98,7 +98,7 @@ Date: Mon, 14 Sep 2025 10:00:00 GMT
 
     it("should handle malformed emails gracefully", async () => {
       const mockStream = {
-        on: vi.fn((event: string, callback: Function) => {
+        on: vi.fn((event: string, callback: (data?: Buffer) => void) => {
           if (event === "data") {
             callback(Buffer.from("invalid email content"));
           } else if (event === "end") {
@@ -112,7 +112,7 @@ Date: Mon, 14 Sep 2025 10:00:00 GMT
         Body: mockStream,
       });
 
-      (simpleParser as any).mockRejectedValue(new Error("Invalid MIME"));
+      (simpleParser as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("Invalid MIME"));
 
       const result = await processor.fetchAndParseEmail({
         bucket: "test-bucket",

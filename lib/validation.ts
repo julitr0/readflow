@@ -281,12 +281,10 @@ export async function validateSNSSignature(message: SNSMessage): Promise<boolean
     }
     
     // Build the string to sign based on message type
-    let stringToSign = '';
-    
     if (message.Type === 'Notification') {
-      stringToSign = buildNotificationStringToSign(message);
+      buildNotificationStringToSign(message);
     } else if (message.Type === 'SubscriptionConfirmation' || message.Type === 'UnsubscribeConfirmation') {
-      stringToSign = buildSubscriptionStringToSign(message);
+      buildSubscriptionStringToSign(message);
     } else {
       console.error('Unknown SNS message type:', message.Type);
       return false;

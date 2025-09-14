@@ -227,11 +227,13 @@ export class SESS3EmailProcessor {
   /**
    * Extract S3 location from SES event
    */
-  extractS3LocationFromSESEvent(sesEvent: any): S3EmailLocation | null {
+  extractS3LocationFromSESEvent(sesEvent: unknown): S3EmailLocation | null {
     try {
       // Handle both direct SES events and SNS-wrapped SES events
-      const mail = sesEvent.mail || sesEvent.Mail;
-      const messageId = mail?.messageId || mail?.MessageId;
+      const sesEventAny = sesEvent as Record<string, unknown>;
+      const mail = sesEventAny.mail || sesEventAny.Mail;
+      const mailObj = mail as Record<string, unknown>;
+      const messageId = mailObj?.messageId || mailObj?.MessageId;
 
       if (!messageId) {
         console.error("No messageId found in SES event");
@@ -299,7 +301,7 @@ export const sesS3Processor = {
   deleteEmail: (location: S3EmailLocation) =>
     sesS3Processor.instance.deleteEmail(location),
 
-  extractS3LocationFromSESEvent: (sesEvent: any) =>
+  extractS3LocationFromSESEvent: (sesEvent: unknown) =>
     sesS3Processor.instance.extractS3LocationFromSESEvent(sesEvent),
 
   validateEmailForProcessing: (emailData: SESEmailData) =>
