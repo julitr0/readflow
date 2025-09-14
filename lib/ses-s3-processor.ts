@@ -241,9 +241,10 @@ export class SESS3EmailProcessor {
       }
 
       // SES stores emails with messageId as the key
+      // Note: When using S3 events, the full path including 'incoming/' is provided
       return {
         bucket: this.bucketName,
-        key: messageId,
+        key: messageId as string,
         region: process.env.AWS_REGION || "us-east-1",
       };
     } catch (error) {

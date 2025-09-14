@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate SNS signature
-    if (!validateSNSSignature(snsMessage)) {
+    if (!(await validateSNSSignature(snsMessage))) {
       console.error("Invalid SNS signature");
       return NextResponse.json(
         { error: "Invalid SNS signature" },
@@ -111,20 +111,63 @@ export async function POST(request: NextRequest) {
 
     // Handle notification messages
     if (snsMessage.Type === "Notification") {
-      // Parse the SES event from the SNS message
-      let sesEvent: SESEvent;
+      // Parse the event from the SNS message
+      let event: any;
 
       try {
-        sesEvent = JSON.parse(snsMessage.Message);
+        event = JSON.parse(snsMessage.Message);
       } catch (error) {
-        console.error("Failed to parse SES event:", error);
+        console.error("Failed to parse event:", error);
         return NextResponse.json(
-          { error: "Invalid SES event format" },
+          { error: "Invalid event format" },
           { status: 400 },
         );
       }
 
-      // Check if this is an email receipt event
+      // Check if this is an S3 event notification
+      if (event.Records && event.Records[0]?.s3) {
+        console.log("S3 event notification received");
+        
+        // Extract S3 location from S3 event
+        const s3Record = event.Records[0].s3;
+        const s3Location = {
+          bucket: s3Record.bucket.name,
+          key: s3Record.object.key,
+          region: process.env.AWS_REGION || "us-east-1",
+        };
+        
+        console.log("S3 object location:", s3Location);
+        
+        // Fetch and process the email from S3
+        const emailData = await sesS3Processor.fetchAndParseEmail(s3Location);
+        
+        if (!emailData) {
+          console.error("Failed to fetch or parse email from S3");
+          return NextResponse.json(
+            { error: "Failed to process email" },
+            { status: 500 },
+          );
+        }
+        
+        // Process the email
+        const validation = sesS3Processor.validateEmailForProcessing(emailData);
+        if (!validation.isValid) {
+          console.log("Email validation failed:", validation.errors);
+          await sesS3Processor.deleteEmail(s3Location);
+          return NextResponse.json(
+            { error: validation.errors.join(", ") },
+            { status: 400 },
+          );
+        }
+        
+        const result = await processEmailData(emailData);
+        await sesS3Processor.deleteEmail(s3Location);
+        
+        return NextResponse.json(result);
+      }
+      
+      // Check if this is a SES event (legacy support)
+      const sesEvent = event as SESEvent;
       if (sesEvent.eventType !== "inbound" && !sesEvent.mail) {
         console.log("Not an inbound email event, skipping");
         return NextResponse.json({

@@ -342,4 +342,97 @@ curl -I https://www.linktoreader.com/api/auth/signin/google
 
 ---
 
-**Session completed successfully with both email processing pipeline and OAuth authentication fully operational.**
+## Personal Email Address UX Improvement
+
+### Problem Identified
+Users were assigned random alphanumeric personal email addresses that were impossible to remember:
+- **Example:** `25pTz4Yw@readflow.com` (old domain, random characters)
+- **User Impact:** Poor UX, unmemorable addresses, confusion
+
+### Root Causes
+1. **Legacy Domain:** Still using `@readflow.com` instead of `@linktoreader.com`
+2. **Random Generation:** Used `userId.slice(0, 8)` creating alphanumeric strings
+3. **No Migration Logic:** Existing users stuck with old addresses
+
+### Solution Implemented
+
+#### **Smart Email Generation Logic**
+```typescript
+// Extract username from Kindle email for user-friendly addresses
+const kindleUsername = kindleEmail.split('@')[0];
+finalPersonalEmail = `${kindleUsername}@linktoreader.com`;
+// Example: jctiusanen@kindle.com → jctiusanen@linktoreader.com
+```
+
+#### **Auto-Migration Detection**
+```typescript
+const shouldRegenerateEmail = !finalPersonalEmail || 
+  finalPersonalEmail.includes('readflow.com') ||  // Old domain
+  !finalPersonalEmail.includes('@') ||  // Broken format
+  /^[a-zA-Z0-9]{8,}@linktoreader\.com$/.test(finalPersonalEmail);  // Random
+```
+
+### Results
+✅ **User-friendly addresses:** `jctiusanen@linktoreader.com` instead of `25pTz4Yw@readflow.com`
+✅ **Automatic migration:** Existing users upgraded on settings update
+✅ **Consistent branding:** All emails now use `linktoreader.com` domain
+
+## Email Processing Pipeline Status
+
+### Current Implementation
+1. **AWS SES → S3:** Emails received and stored in `ses-linktoreader-emails-s3-1` bucket
+2. **S3 → SNS:** Bucket events trigger SNS topic notifications
+3. **SNS → Webhook:** `/api/email/ses-webhook` endpoint processes emails
+4. **Processing → Kindle:** Conversion and delivery pipeline
+
+### Known Issues Requiring Investigation
+1. **Emails Not Processing:** Test emails to personal addresses not reaching Kindle
+2. **No Bounce Messages:** Emails accepted but not processed
+3. **Webhook Status:** Endpoint may not be responding to SNS notifications
+
+### Next Session Priority
+**Debug Email Processing Pipeline:**
+- Verify S3 bucket is receiving emails
+- Check SNS subscription status and logs
+- Test webhook endpoint functionality
+- Trace full email flow from receipt to Kindle delivery
+
+## Session Summary
+
+### Major Accomplishments
+1. ✅ **AWS SES S3 Email Processing:** Complete implementation with SNS integration
+2. ✅ **OAuth Authentication:** Fixed critical Better Auth + Neon database issues
+3. ✅ **User-Friendly Emails:** Migrated from random to readable personal addresses
+4. ✅ **Production Deployment:** All changes successfully deployed to Vercel
+
+### Technical Decisions
+- **Replaced Drizzle Adapter:** Used PostgreSQL Pool to avoid Neon compatibility issues
+- **Progressive Debugging:** Systematic isolation of auth problems
+- **Email Address Strategy:** Username extraction from Kindle email for consistency
+
+### Outstanding Tasks
+1. **Email Pipeline Debugging:** Emails not reaching Kindle (high priority)
+2. **End-to-End Testing:** Verify complete email-to-Kindle flow
+3. **Monitoring Setup:** Add logging for email processing stages
+
+### Configuration Working State
+```typescript
+// Working Better Auth configuration
+import { Pool } from "pg";
+database: new Pool({ connectionString: process.env.DATABASE_URL! })
+
+// Working S3 processor configuration  
+AWS_S3_EMAIL_BUCKET=ses-linktoreader-emails-s3-1
+AWS_REGION=us-east-1
+```
+
+### Session Metrics
+- **Duration:** ~4 hours
+- **Critical Issues Resolved:** 3 (OAuth, email addresses, auth configuration)
+- **Files Modified:** 15+ files across auth, email, and settings
+- **Deployments:** 12 successful Vercel deployments
+- **Test Coverage:** S3 processor tests passing, auth working in production
+
+---
+
+**Session status: OAuth and personal emails working. Email processing pipeline implemented but requires debugging in next session.**
