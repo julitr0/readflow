@@ -30,8 +30,16 @@ export async function POST(request: NextRequest) {
     const { kindleEmail, personalEmail, onboardingComplete } = settings;
     // Note: notificationsEnabled and autoDelivery would be used in full implementation
 
-    // Generate personal email if not provided
-    const finalPersonalEmail = personalEmail || `${userId.slice(0, 8)}@linktoreader.com`;
+    // Generate personal email based on Kindle email username
+    let finalPersonalEmail = personalEmail;
+    if (!finalPersonalEmail && kindleEmail) {
+      // Extract username from Kindle email (e.g., jctiusanen@kindle.com -> jctiusanen)
+      const kindleUsername = kindleEmail.split('@')[0];
+      finalPersonalEmail = `${kindleUsername}@linktoreader.com`;
+    } else if (!finalPersonalEmail) {
+      // Fallback to userId if no Kindle email provided
+      finalPersonalEmail = `${userId.slice(0, 8)}@linktoreader.com`;
+    }
 
     // Check if user settings exist
     const existingSettings = await db

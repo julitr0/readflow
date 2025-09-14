@@ -196,6 +196,150 @@ await sesS3Processor.deleteEmail(s3Location);
 - **AWS Services Configured:** SNS topic, S3 event notifications, IAM permissions
 - **Deployment Status:** ✅ Production-ready and deployed
 
+## OAuth Authentication Crisis Resolution
+
+### Problem Timeline and Root Cause Analysis
+
+**Initial Symptom:** "Continue with Google" button completely non-responsive, leading to complete authentication failure blocking user onboarding.
+
+**Root Cause Discovery Process:**
+1. **Initial Diagnosis:** Suspected environment variable or OAuth configuration issues
+2. **Progressive Debugging:** Systematic elimination of potential causes following yesterday's successful methodology
+3. **Critical Discovery:** Multiple cascading dependency conflicts caused by package management issues
+
+### Root Causes Identified
+
+#### **Primary Issue: Conflicting Better Auth Packages**
+- **Conflict:** Two different Better Auth packages installed simultaneously
+  - `@polar-sh/better-auth: ^1.0.1` (deprecated/legacy package)  
+  - `better-auth: ^1.2.8` (current package)
+- **Impact:** Caused module resolution conflicts and prevented proper initialization
+- **Solution:** Removed deprecated `@polar-sh/better-auth` package
+
+#### **Secondary Issue: Version Mismatch**
+- **Problem:** Local environment had `better-auth@1.3.4` while production used `^1.2.8`
+- **Impact:** Different behavior between local testing and production deployment
+- **Solution:** Updated package.json to match installed version `^1.3.4`
+
+#### **Tertiary Issue: Neon Database + Drizzle Adapter Incompatibility**
+- **Technical Problem:** Known compatibility issue between `@neondatabase/serverless` and `better-auth/adapters/drizzle`
+- **Error:** `Cannot find module 'better-auth/adapters/drizzle'` in production
+- **Underlying Cause:** Neon database requires tagged-template syntax, but Better Auth Drizzle adapter doesn't use tagged-template composability
+- **Solution:** Replaced Drizzle adapter with Better Auth's built-in PostgreSQL Pool connection
+
+#### **Final Issue: Incorrect Database Configuration Format**
+- **Problem:** Used configuration object instead of Pool instance
+- **Error:** `Failed to initialize database adapter`
+- **Solution:** Replaced config object with proper `new Pool({ connectionString: ... })` instance
+
+### Step-by-Step Resolution Process
+
+#### **Phase 1: Dependency Conflict Resolution**
+```bash
+# Remove conflicting package
+npm uninstall @polar-sh/better-auth
+
+# Update version to match installed
+"better-auth": "^1.3.4"
+```
+
+#### **Phase 2: Progressive Debugging Strategy**
+```typescript
+// Temporarily remove database adapter to isolate issues
+export const auth = betterAuth({
+  // database: drizzleAdapter(db, { ... }), // Commented out
+  socialProviders: { google: { ... } },
+});
+```
+
+#### **Phase 3: Database Adapter Replacement**
+```typescript
+// From: Problematic Drizzle adapter
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+database: drizzleAdapter(db, { provider: "pg", schema: {...} })
+
+// To: Built-in PostgreSQL Pool
+import { Pool } from "pg";
+database: new Pool({ connectionString: process.env.DATABASE_URL! })
+```
+
+### Technical Implementation Details
+
+#### **Final Working Configuration:**
+```typescript
+import { betterAuth } from "better-auth";
+import { nextCookies } from "better-auth/next-js";
+import { Pool } from "pg";
+
+export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL || "https://www.linktoreader.com",
+  secret: process.env.BETTER_AUTH_SECRET!,
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://linktoreader.com", 
+    "https://www.linktoreader.com"
+  ],
+  database: new Pool({
+    connectionString: process.env.DATABASE_URL!,
+  }),
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
+  },
+  plugins: [nextCookies()],
+});
+```
+
+#### **Key Diagnostic Commands Used:**
+```bash
+# Check installed vs declared versions
+npm ls better-auth
+
+# Test import resolution
+node -e "try { require('better-auth/adapters/drizzle'); } catch(e) { console.log(e.message); }"
+
+# Verify endpoint response
+curl -I https://www.linktoreader.com/api/auth/signin/google
+```
+
+### Lessons Learned and Prevention Strategies
+
+#### **Package Management Best Practices:**
+1. **Regular Dependency Audits:** Check for conflicting packages during development
+2. **Version Consistency:** Ensure local and production environments match exactly
+3. **Lock File Management:** Commit and review package-lock.json changes
+
+#### **Database Adapter Selection Criteria:**
+1. **Compatibility First:** Verify adapter compatibility with database provider (Neon + Drizzle issues)
+2. **Simplicity Over Features:** Built-in adapters often more reliable than third-party integrations
+3. **Progressive Testing:** Test database adapters in isolation before full integration
+
+#### **OAuth Debugging Methodology:**
+1. **Start Simple:** Remove database persistence to isolate OAuth flow issues
+2. **Systematic Elimination:** Test each component individually (imports → configuration → database)
+3. **Error Pattern Recognition:** Module import errors often indicate dependency conflicts
+
+### Crisis Resolution Metrics
+
+**Total Resolution Time:** ~3 hours across multiple debugging sessions  
+**Commits Required:** 8 targeted fixes  
+**Primary Debugging Tool:** Vercel function logs with systematic error isolation  
+**Success Indicator:** Complete OAuth flow from Google authentication to dashboard access  
+
+### Future Maintenance Guidelines
+
+#### **Neon Database + Better Auth Configuration:**
+- **Recommended:** Use `new Pool({ connectionString })` for reliability
+- **Avoid:** Drizzle adapter with Neon due to tagged-template syntax incompatibility
+- **Monitor:** Future Better Auth versions for improved Neon support
+
+#### **OAuth Health Monitoring:**
+- **Early Warning:** 404 responses (configuration issues) vs timeout/5xx (runtime errors)
+- **Key Metrics:** Authentication endpoint response times and error rates
+- **Test Scenarios:** Regular OAuth flow testing in production environment
+
 ---
 
-**Session completed successfully with full email processing pipeline operational.**
+**Session completed successfully with both email processing pipeline and OAuth authentication fully operational.**
