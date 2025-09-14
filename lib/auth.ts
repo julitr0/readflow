@@ -1,7 +1,4 @@
-// import { db } from "@/db/drizzle";
-// import { account, session, user, verification } from "@/db/schema";
 import { betterAuth } from "better-auth";
-// import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 
 export const auth = betterAuth({
@@ -12,16 +9,11 @@ export const auth = betterAuth({
     "https://linktoreader.com",
     "https://www.linktoreader.com"
   ],
-  // Temporarily remove database adapter to test if OAuth flow works
-  // database: drizzleAdapter(db, {
-  //   provider: "pg",
-  //   schema: {
-  //     user,
-  //     session,
-  //     account,
-  //     verification,
-  //   },
-  // }),
+  // Use simple database URL instead of Drizzle adapter to avoid Neon compatibility issues
+  database: {
+    connectionString: process.env.DATABASE_URL!,
+    type: "postgres",
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
