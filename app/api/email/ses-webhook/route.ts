@@ -7,6 +7,7 @@ import { usageTracker } from "@/lib/usage-tracker";
 import { emailProcessingRateLimit } from "@/lib/rate-limiter";
 import { validateSNSSignature } from "@/lib/validation";
 import { sesS3Processor, type SESEmailData } from "@/lib/ses-s3-processor";
+import { extractLinksFromEmail, extractContentFromURL } from "@/lib/url-extractor";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
 
@@ -174,7 +175,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Check if this is a SES event (legacy support)
-      const sesEvent = event as SESEvent;
+      const sesEvent = event as unknown as SESEvent;
       if (sesEvent.eventType !== "inbound" && !sesEvent.mail) {
         console.log("Not an inbound email event, skipping");
         return NextResponse.json({
@@ -300,15 +301,42 @@ async function processEmailData(emailData: SESEmailData) {
     };
   }
 
+  // Check if email contains newsletter links
+  const extractedUrls = extractLinksFromEmail(bodyHtml);
+  let processedContent = bodyHtml;
+  let processedMetadata = contentConverter.extractMetadata(bodyHtml);
+  
+  if (extractedUrls.length > 0) {
+    console.log(`Found ${extractedUrls.length} newsletter URLs in email`);
+    
+    // Extract content from the first valid URL
+    for (const url of extractedUrls) {
+      console.log(`Attempting to extract content from: ${url}`);
+      const extractedContent = await extractContentFromURL(url);
+      
+      if (extractedContent) {
+        console.log("Successfully extracted content from URL");
+        processedContent = extractedContent.html;
+        processedMetadata = {
+          ...contentConverter.extractMetadata(extractedContent.html),
+          title: extractedContent.title || processedMetadata.title,
+          author: extractedContent.author || processedMetadata.author,
+          source: extractedContent.source || processedMetadata.source,
+        };
+        break; // Use content from first successful extraction
+      }
+    }
+  }
+
   // Validate content
-  const contentValidation = contentConverter.validateContent(bodyHtml);
+  const contentValidation = contentConverter.validateContent(processedContent);
   if (!contentValidation.isValid) {
     console.log("Content validation failed:", contentValidation.errors);
     return { error: contentValidation.errors.join(", ") };
   }
 
-  // Extract metadata
-  const metadata = contentConverter.extractMetadata(bodyHtml);
+  // Use the processed metadata
+  const metadata = processedMetadata;
 
   // Create conversion record
   const conversionId = crypto.randomUUID();
@@ -334,10 +362,10 @@ async function processEmailData(emailData: SESEmailData) {
   await usageTracker.trackConversion(user.userId, conversionId);
   await usageTracker.checkAndSendUsageAlerts(user.userId);
 
-  // Process conversion asynchronously
+  // Process conversion asynchronously with the processed content
   processConversionAsync(
     conversionId,
-    bodyHtml,
+    processedContent,
     metadata,
     user.kindleEmail,
   ).catch((error) => {

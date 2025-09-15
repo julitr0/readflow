@@ -4,10 +4,10 @@ import { getTestConversion } from "@/lib/test-storage";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const conversionId = params.id;
+    const { id: conversionId } = await params;
     
     // Get the conversion data from shared storage
     const conversion = getTestConversion(conversionId);

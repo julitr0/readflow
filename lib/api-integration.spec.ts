@@ -165,7 +165,7 @@ describe('API Integration Tests', () => {
       const { GET } = await import('@/app/api/conversion/download/[id]/route');
       
       const request = new NextRequest('http://localhost/api/conversion/download/nonexistent-id');
-      const params = { id: 'nonexistent-id' };
+      const params = Promise.resolve({ id: 'nonexistent-id' });
       
       const response = await GET(request, { params });
       const data = await response.json();
