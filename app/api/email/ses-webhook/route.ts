@@ -3,6 +3,7 @@ import { db } from "@/db/drizzle";
 import { conversion, userSettings } from "@/db/schema";
 import { contentConverter } from "@/lib/conversion";
 import { sendToKindle } from "@/lib/kindle-delivery";
+import { epubGenerator } from "@/lib/epub-generator";
 import { usageTracker } from "@/lib/usage-tracker";
 import { emailProcessingRateLimit } from "@/lib/rate-limiter";
 import { validateSNSSignature } from "@/lib/validation";
@@ -395,8 +396,8 @@ async function processConversionAsync(
   kindleEmail: string,
 ) {
   try {
-    // Convert content with retry logic
-    let conversionResult;
+    // Use the same epub generator approach as the working UI
+    let epubFile;
     let attempts = 0;
     const maxAttempts = 3;
 
@@ -404,16 +405,24 @@ async function processConversionAsync(
       attempts++;
 
       try {
-        conversionResult = await contentConverter.convertHtmlToKindle(
+        // Generate EPUB file using the exact same method as the UI
+        epubFile = await epubGenerator.generateEpubFile(
           htmlContent,
           metadata as import("@/lib/conversion").ConversionMetadata,
+          {
+            title: metadata.title,
+            author: metadata.author,
+            publisher: "Link to Reader",
+            language: "en",
+          }
         );
 
-        if (conversionResult.success) {
+        if (epubFile) {
+          console.log(`EPUB generation successful on attempt ${attempts}`);
           break;
         }
       } catch (error) {
-        console.log(`Conversion attempt ${attempts} failed:`, error);
+        console.log(`EPUB generation attempt ${attempts} failed:`, error);
 
         if (attempts === maxAttempts) {
           throw error;
@@ -426,10 +435,8 @@ async function processConversionAsync(
       }
     }
 
-    if (!conversionResult?.success) {
-      throw new Error(
-        conversionResult?.error || "Conversion failed after retries",
-      );
+    if (!epubFile) {
+      throw new Error("EPUB generation failed after retries");
     }
 
     // Update conversion record with success
@@ -437,18 +444,29 @@ async function processConversionAsync(
       .update(conversion)
       .set({
         status: "completed",
-        fileUrl: conversionResult.fileUrl,
-        fileSize: conversionResult.fileSize,
+        fileUrl: epubFile.filename, // Use epub filename instead of file URL for now
+        fileSize: epubFile.size,
         completedAt: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(conversion.id, conversionId));
 
-    // Send to Kindle with retry logic
+    // Save epub file to temporary location for Kindle delivery
+    const tempDir = await import("os").then(os => os.tmpdir());
+    const tempPath = await import("path").then(path => 
+      path.join(tempDir, `${conversionId}_${epubFile.filename}`)
+    );
+    
+    await import("fs").then(fs => 
+      fs.promises.writeFile(tempPath, epubFile.buffer)
+    );
+
+    // Send to Kindle with retry logic using the temp file path
     const deliveryResult = await sendToKindle(
-      conversionResult.fileUrl!,
+      tempPath,
       kindleEmail,
       (metadata as import("@/lib/conversion").ConversionMetadata).title,
+      conversionId,
     );
 
     if (deliveryResult.success) {
@@ -461,6 +479,13 @@ async function processConversionAsync(
         .where(eq(conversion.id, conversionId));
     } else {
       throw new Error(deliveryResult.error || "Kindle delivery failed");
+    }
+
+    // Clean up temporary file
+    try {
+      await import("fs").then(fs => fs.promises.unlink(tempPath));
+    } catch (cleanupError) {
+      console.warn("Failed to clean up temp file:", cleanupError);
     }
   } catch (error) {
     console.error("Conversion processing failed:", error);
