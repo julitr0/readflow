@@ -194,7 +194,7 @@ function cleanSubstackHTML(html: string): string {
     const match = cleaned.match(selector);
     if (match && match[1].trim().length > 1000) { // Ensure we got substantial content
       console.log(`Substack content extracted using selector, length: ${match[1].length}`);
-      return match[1];
+      return sanitizeHtmlForKindle(match[1]);
     }
   }
   
@@ -204,7 +204,7 @@ function cleanSubstackHTML(html: string): string {
   const contentMatch = cleaned.match(contentPattern);
   if (contentMatch && contentMatch[1].trim().length > 1000) {
     console.log(`Substack content extracted using h1 pattern, length: ${contentMatch[1].length}`);
-    return contentMatch[1];
+    return sanitizeHtmlForKindle(contentMatch[1]);
   }
   
   // Last resort: return body content but remove common non-content elements
@@ -220,27 +220,27 @@ function cleanSubstackHTML(html: string): string {
     bodyContent = bodyContent.replace(/<div[^>]*class="[^"]*footer[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
     
     console.log(`Substack content extracted from body (filtered), length: ${bodyContent.length}`);
-    return bodyContent;
+    return sanitizeHtmlForKindle(bodyContent);
   }
 
   console.log(`Substack content extraction fallback, returning full HTML, length: ${cleaned.length}`);
-  return cleaned;
+  return sanitizeHtmlForKindle(cleaned);
 }
 
 function cleanMediumHTML(html: string): string {
   // Extract the main article content from Medium HTML
   const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
   if (articleMatch) {
-    return articleMatch[1];
+    return sanitizeHtmlForKindle(articleMatch[1]);
   }
 
   // Try to find main content area
   const mainMatch = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
   if (mainMatch) {
-    return mainMatch[1];
+    return sanitizeHtmlForKindle(mainMatch[1]);
   }
 
-  return html;
+  return sanitizeHtmlForKindle(html);
 }
 
 function cleanGenericHTML(html: string): string {
@@ -252,18 +252,65 @@ function cleanGenericHTML(html: string): string {
   // Try to extract main content
   const articleMatch = cleaned.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
   if (articleMatch) {
-    return articleMatch[1];
+    return sanitizeHtmlForKindle(articleMatch[1]);
   }
 
   const mainMatch = cleaned.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
   if (mainMatch) {
-    return mainMatch[1];
+    return sanitizeHtmlForKindle(mainMatch[1]);
   }
 
   const bodyMatch = cleaned.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   if (bodyMatch) {
-    return bodyMatch[1];
+    return sanitizeHtmlForKindle(bodyMatch[1]);
   }
 
-  return cleaned;
+  return sanitizeHtmlForKindle(cleaned);
+}
+
+/**
+ * Sanitize HTML content to be more compatible with Calibre
+ * Removes problematic elements and attributes that can cause conversion issues
+ */
+function sanitizeHtmlForKindle(html: string): string {
+  let sanitized = html;
+  
+  // Remove problematic attributes that can cause Calibre issues
+  sanitized = sanitized.replace(/\s+style="[^"]*"/gi, ''); // Remove inline styles
+  sanitized = sanitized.replace(/\s+class="[^"]*"/gi, ''); // Remove class attributes
+  sanitized = sanitized.replace(/\s+id="[^"]*"/gi, ''); // Remove id attributes
+  sanitized = sanitized.replace(/\s+data-[^=]*="[^"]*"/gi, ''); // Remove data attributes
+  sanitized = sanitized.replace(/\s+aria-[^=]*="[^"]*"/gi, ''); // Remove aria attributes
+  sanitized = sanitized.replace(/\s+role="[^"]*"/gi, ''); // Remove role attributes
+  
+  // Remove empty paragraphs and divs
+  sanitized = sanitized.replace(/<p[^>]*>\s*<\/p>/gi, '');
+  sanitized = sanitized.replace(/<div[^>]*>\s*<\/div>/gi, '');
+  
+  // Remove script and style tags completely
+  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  sanitized = sanitized.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+  
+  // Remove problematic tags that Calibre might not handle well
+  sanitized = sanitized.replace(/<svg[\s\S]*?<\/svg>/gi, ''); // Remove SVG elements
+  sanitized = sanitized.replace(/<canvas[\s\S]*?<\/canvas>/gi, ''); // Remove canvas elements
+  sanitized = sanitized.replace(/<video[\s\S]*?<\/video>/gi, ''); // Remove video elements
+  sanitized = sanitized.replace(/<audio[\s\S]*?<\/audio>/gi, ''); // Remove audio elements
+  sanitized = sanitized.replace(/<iframe[\s\S]*?<\/iframe>/gi, ''); // Remove iframes
+  sanitized = sanitized.replace(/<object[\s\S]*?<\/object>/gi, ''); // Remove object elements
+  sanitized = sanitized.replace(/<embed[\s\S]*?<\/embed>/gi, ''); // Remove embed elements
+  
+  // Convert divs to paragraphs for better e-reader compatibility
+  sanitized = sanitized.replace(/<div([^>]*)>/gi, '<p$1>');
+  sanitized = sanitized.replace(/<\/div>/gi, '</p>');
+  
+  // Clean up excessive whitespace
+  sanitized = sanitized.replace(/\s+/g, ' '); // Multiple spaces to single space
+  sanitized = sanitized.replace(/>\s+</g, '><'); // Remove whitespace between tags
+  
+  // Ensure we have proper paragraph structure
+  sanitized = sanitized.replace(/(<\/p>)\s*(<p[^>]*>)/gi, '$1\n$2');
+  
+  console.log(`HTML sanitized for Kindle, length: ${sanitized.length}`);
+  return sanitized.trim();
 }
