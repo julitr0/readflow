@@ -168,25 +168,63 @@ function cleanNewsletterHTML(html: string, url: string): string {
 }
 
 function cleanSubstackHTML(html: string): string {
-  // Extract the main article content from Substack HTML
-  const articleMatch = html.match(/<div[^>]*class="[^"]*body[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-  if (articleMatch) {
-    return articleMatch[1];
+  // Modern Substack uses various class patterns for content
+  // Try multiple selectors to find the main content
+  
+  // Remove script and style tags first
+  let cleaned = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  cleaned = cleaned.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+  
+  // Try modern Substack post content selectors
+  const contentSelectors = [
+    // Modern Substack post content
+    /<div[^>]*class="[^"]*post-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]*class="[^"]*body[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]*class="[^"]*markup[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]*class="[^"]*available-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    // Try article tag
+    /<article[^>]*>([\s\S]*?)<\/article>/i,
+    // Try main content area
+    /<main[^>]*>([\s\S]*?)<\/main>/i,
+    // Generic content div
+    /<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/i
+  ];
+  
+  for (const selector of contentSelectors) {
+    const match = cleaned.match(selector);
+    if (match && match[1].trim().length > 1000) { // Ensure we got substantial content
+      console.log(`Substack content extracted using selector, length: ${match[1].length}`);
+      return match[1];
+    }
   }
-
-  // Fallback: try to extract content between article tags
-  const articleTagMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
-  if (articleTagMatch) {
-    return articleTagMatch[1];
+  
+  // If specific selectors fail, try to find content between common Substack patterns
+  // Look for content after typical Substack header patterns and before footer
+  const contentPattern = /<h1[^>]*>[\s\S]*?<\/h1>([\s\S]*?)(?:<footer|<div[^>]*class="[^"]*footer|$)/i;
+  const contentMatch = cleaned.match(contentPattern);
+  if (contentMatch && contentMatch[1].trim().length > 1000) {
+    console.log(`Substack content extracted using h1 pattern, length: ${contentMatch[1].length}`);
+    return contentMatch[1];
   }
-
-  // Last resort: extract body content
-  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  
+  // Last resort: return body content but remove common non-content elements
+  const bodyMatch = cleaned.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   if (bodyMatch) {
-    return bodyMatch[1];
+    let bodyContent = bodyMatch[1];
+    // Remove navigation, headers, footers, and other non-content elements
+    bodyContent = bodyContent.replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '');
+    bodyContent = bodyContent.replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '');
+    bodyContent = bodyContent.replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '');
+    bodyContent = bodyContent.replace(/<div[^>]*class="[^"]*nav[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
+    bodyContent = bodyContent.replace(/<div[^>]*class="[^"]*header[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
+    bodyContent = bodyContent.replace(/<div[^>]*class="[^"]*footer[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
+    
+    console.log(`Substack content extracted from body (filtered), length: ${bodyContent.length}`);
+    return bodyContent;
   }
 
-  return html;
+  console.log(`Substack content extraction fallback, returning full HTML, length: ${cleaned.length}`);
+  return cleaned;
 }
 
 function cleanMediumHTML(html: string): string {

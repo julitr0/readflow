@@ -305,6 +305,7 @@ async function processEmailData(emailData: SESEmailData) {
   const extractedUrls = extractLinksFromEmail(bodyHtml);
   let processedContent = bodyHtml;
   let processedMetadata = contentConverter.extractMetadata(bodyHtml);
+  let contentWasExtractedFromUrl = false;
   
   if (extractedUrls.length > 0) {
     console.log(`Found ${extractedUrls.length} newsletter URLs in email`);
@@ -323,13 +324,17 @@ async function processEmailData(emailData: SESEmailData) {
           author: extractedContent.author || processedMetadata.author,
           source: extractedContent.source || processedMetadata.source,
         };
+        contentWasExtractedFromUrl = true;
         break; // Use content from first successful extraction
       }
     }
   }
 
-  // Validate content
-  const contentValidation = contentConverter.validateContent(processedContent);
+  // Validate content - skip word count check if content was extracted from URL
+  const contentValidation = contentWasExtractedFromUrl 
+    ? { isValid: true, errors: [] } // Skip validation for URL-extracted content
+    : contentConverter.validateContent(processedContent);
+    
   if (!contentValidation.isValid) {
     console.log("Content validation failed:", contentValidation.errors);
     return { error: contentValidation.errors.join(", ") };
