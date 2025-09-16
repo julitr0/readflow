@@ -439,31 +439,31 @@ async function processConversionAsync(
       throw new Error("EPUB generation failed after retries");
     }
 
+    // Save epub file to persistent storage for both Kindle delivery and download
+    const path = await import("path");
+    const fs = await import("fs");
+    
+    const storageDir = path.join(process.cwd(), "storage", "conversions");
+    await fs.promises.mkdir(storageDir, { recursive: true });
+    
+    const finalPath = path.join(storageDir, `${conversionId}_${epubFile.filename}`);
+    await fs.promises.writeFile(finalPath, epubFile.buffer);
+
     // Update conversion record with success
     await db
       .update(conversion)
       .set({
         status: "completed",
-        fileUrl: epubFile.filename, // Use epub filename instead of file URL for now
+        fileUrl: finalPath, // Use persistent file path for downloads
         fileSize: epubFile.size,
         completedAt: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(conversion.id, conversionId));
 
-    // Save epub file to temporary location for Kindle delivery
-    const tempDir = await import("os").then(os => os.tmpdir());
-    const tempPath = await import("path").then(path => 
-      path.join(tempDir, `${conversionId}_${epubFile.filename}`)
-    );
-    
-    await import("fs").then(fs => 
-      fs.promises.writeFile(tempPath, epubFile.buffer)
-    );
-
-    // Send to Kindle with retry logic using the temp file path
+    // Send to Kindle with retry logic using the final file path
     const deliveryResult = await sendToKindle(
-      tempPath,
+      finalPath,
       kindleEmail,
       (metadata as import("@/lib/conversion").ConversionMetadata).title,
       conversionId,
@@ -481,12 +481,7 @@ async function processConversionAsync(
       throw new Error(deliveryResult.error || "Kindle delivery failed");
     }
 
-    // Clean up temporary file
-    try {
-      await import("fs").then(fs => fs.promises.unlink(tempPath));
-    } catch (cleanupError) {
-      console.warn("Failed to clean up temp file:", cleanupError);
-    }
+    console.log(`Email processing completed successfully. File saved to: ${finalPath}`);
   } catch (error) {
     console.error("Conversion processing failed:", error);
 
@@ -611,23 +606,48 @@ function extractSourceWorking(url: string): string {
 }
 
 function cleanSubstackHTMLWorking(html: string): string {
-  // Extract the main article content from Substack HTML
-  const articleMatch = html.match(/<div[^>]*class="[^"]*body[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-  if (articleMatch) {
-    return articleMatch[1];
+  // Modern Substack uses various class patterns for content
+  // Try multiple selectors to find the main content
+  
+  const contentSelectors = [
+    // Modern Substack post content
+    /<div[^>]*class="[^"]*post-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]*class="[^"]*body[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]*class="[^"]*markup[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]*class="[^"]*available-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]*class="[^"]*post-body[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]*class="[^"]*reader2-post[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    // Try article tag
+    /<article[^>]*>([\s\S]*?)<\/article>/i,
+    // Try main content area
+    /<main[^>]*>([\s\S]*?)<\/main>/i,
+  ];
+  
+  for (const selector of contentSelectors) {
+    const match = html.match(selector);
+    if (match && match[1].trim().length > 1000) { // Ensure substantial content
+      console.log(`Substack content extracted using selector, length: ${match[1].length}`);
+      return match[1];
+    }
   }
-
-  // Fallback: try to extract content between article tags
-  const articleTagMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
-  if (articleTagMatch) {
-    return articleTagMatch[1];
+  
+  // If specific selectors fail, try to find content after title
+  const titlePattern = /<h1[^>]*>[\s\S]*?<\/h1>([\s\S]*?)(?:<footer|<div[^>]*class="[^"]*footer|$)/i;
+  const titleMatch = html.match(titlePattern);
+  if (titleMatch && titleMatch[1].trim().length > 1000) {
+    console.log(`Substack content extracted using title pattern, length: ${titleMatch[1].length}`);
+    return titleMatch[1];
   }
-
-  // Last resort: extract body content
-  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  if (bodyMatch) {
-    return bodyMatch[1];
+  
+  // Last resort: get everything between the first paragraph tag and footer
+  const contentPattern = /<p[^>]*>([\s\S]*?)(?:<footer|<div[^>]*class="[^"]*footer|$)/i;
+  const contentMatch = html.match(contentPattern);
+  if (contentMatch && contentMatch[1].trim().length > 500) {
+    console.log(`Substack content extracted using paragraph pattern, length: ${contentMatch[1].length}`);
+    return `<p>${contentMatch[1]}`;
   }
-
-  return html;
+  
+  console.log(`Substack content extraction fallback, returning limited HTML, length: ${html.length}`);
+  // Return a reasonable portion of the HTML if all else fails
+  return html.substring(0, Math.min(50000, html.length));
 }
